@@ -19,9 +19,9 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Linq;
 using System.Net;
-using SIPSorcery.Sys;
+using System.Text;
+using SIPSorcery.Interfaces;
 
 namespace SIPSorcery.Net
 {
@@ -324,9 +324,9 @@ namespace SIPSorcery.Net
         private string GetFoundation()
         {
             var serverProtocol = IceServer != null ? IceServer.Protocol.ToString().ToLower() : "udp";
-            var builder = new System.Text.StringBuilder();
+            var builder = new StringBuilder();
             builder = builder.Append(type).Append(address).Append(protocol).Append(serverProtocol);
-            byte[] bytes = System.Text.Encoding.ASCII.GetBytes(builder.ToString());
+            byte[] bytes = Encoding.ASCII.GetBytes(builder.ToString());
             return UpdateCrc32(0, bytes).ToString();
 
             /*int addressVal = !String.IsNullOrEmpty(address) ? Crypto.GetSHAHash(address).Sum(x => (byte)x) : 0;
@@ -388,7 +388,7 @@ namespace SIPSorcery.Net
                 candidate = CANDIDATE_PREFIX + ":" + this.ToString()
             };
 
-            return rtcCandInit.toJSON();
+            return rtcCandInit.ToJson();
         }
 
         /// <summary>

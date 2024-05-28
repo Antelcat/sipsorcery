@@ -164,12 +164,11 @@ namespace SIPSorcery.SIP
         {
             try
             {
-                string uriPrefix = (serverEndPoint.Protocol == SIPProtocolsEnum.wss) ? WEB_SOCKET_SECURE_URI_PREFIX : WEB_SOCKET_URI_PREFIX;
+                var uriPrefix = (serverEndPoint.Protocol == SIPProtocolsEnum.wss) ? WEB_SOCKET_SECURE_URI_PREFIX : WEB_SOCKET_URI_PREFIX;
                 var serverUri = new Uri($"{uriPrefix}{serverEndPoint.GetIPEndPoint()}");
 
-                string connectionID = GetConnectionID(serverUri);
-                serverEndPoint.ChannelID = this.ID;
-                serverEndPoint.ConnectionID = connectionID;
+                var connectionID = GetConnectionID(serverUri);
+                serverEndPoint = serverEndPoint with { ChannelID = ID, ConnectionID = connectionID };
 
                 if (m_egressConnections.TryGetValue(connectionID, out var conn))
                 {
@@ -197,7 +196,7 @@ namespace SIPSorcery.SIP
                     // There's currently no way to get the socket IP end point used by the client web socket to establish
                     // the connection. Instead provide a dummy local end point that has as much of the information as we can.
                     IPEndPoint localEndPoint = new IPEndPoint((serverEndPoint.Address.AddressFamily == AddressFamily.InterNetwork) ? IPAddress.Any : IPAddress.IPv6Any, 0);
-                    SIPEndPoint localSIPEndPoint = new SIPEndPoint(serverEndPoint.Protocol, localEndPoint, this.ID, connectionID);
+                    SIPEndPoint localSIPEndPoint = new SIPEndPoint(localEndPoint, serverEndPoint.Protocol, ID, connectionID);
 
                     ClientWebSocketConnection newConn = new ClientWebSocketConnection
                     {
@@ -294,11 +293,11 @@ namespace SIPSorcery.SIP
         /// <returns>The local SIP end points this channel selects to use for connecting to the destination.</returns>
         internal override SIPEndPoint GetLocalSIPEndPointForDestination(SIPEndPoint dstEndPoint)
         {
-            IPAddress dstAddress = dstEndPoint.GetIPEndPoint().Address;
-            IPAddress localAddress = GetLocalIPAddressForDestination(dstAddress);
+            var dstAddress = dstEndPoint.GetIPEndPoint().Address;
+            var localAddress = GetLocalIPAddressForDestination(dstAddress);
 
             // Need to return ws or wss to match the destination.
-            return new SIPEndPoint(dstEndPoint.Protocol, localAddress, Port, ID, null);
+            return new SIPEndPoint(localAddress, Port, dstEndPoint.Protocol, ID);
         }
 
         /// <summary>

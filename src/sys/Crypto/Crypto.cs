@@ -25,7 +25,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SIPSorcery.Sys
 {
-    public class Crypto
+    public static class Crypto
     {
         // TODO: When .NET Standard and Framework support are deprecated these pragmas can be removed.
 #pragma warning disable SYSLIB0001

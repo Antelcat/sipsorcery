@@ -39,11 +39,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SIPSorcery.net.RTP;
 using Org.BouncyCastle.Crypto.Tls;
+using SIPSorcery.Interfaces;
 using SIPSorcery.SIP.App;
 using SIPSorcery.Sys;
 
@@ -70,45 +72,17 @@ namespace SIPSorcery.Net
     /// <remarks>
     /// As specified in https://www.w3.org/TR/webrtc/#rtcsessiondescription-class.
     /// </remarks>
-    public class RTCSessionDescriptionInit
+    public class RTCSessionDescriptionInit : IJsonify
     {
         /// <summary>
         /// The type of the Session Description.
         /// </summary>
-        public RTCSdpType type { get; set; }
+        [JsonPropertyName("type")] public required SdpType Type { get; init; }
 
         /// <summary>
         /// A string representation of the Session Description.
         /// </summary>
-        public string sdp { get; set; }
-
-        public string toJSON()
-        {
-            //return "{" +
-            //    $"  \"type\": \"{type}\"," +
-            //    $"  \"sdp\": \"{sdp.Replace(SDP.CRLF, @"\\n").Replace("\"", "\\\"")}\"" +
-            //    "}";
-
-            return TinyJson.JSONWriter.ToJson(this);
-        }
-
-        public static bool TryParse(string json, out RTCSessionDescriptionInit init)
-        {
-            init = null;
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return false;
-            }
-            else
-            {
-                init = TinyJson.JSONParser.FromJson<RTCSessionDescriptionInit>(json);
-
-                // To qualify as parsed all required fields must be set.
-                return init != null &&
-                    init.sdp != null;
-            }
-        }
+        [JsonPropertyName("sdp")] public required string Sdp { get; init; }
     }
 
     /// <summary>
@@ -209,17 +183,17 @@ namespace SIPSorcery.Net
 
         public bool IsDtlsNegotiationComplete { get; private set; } = false;
 
-        public RTCSessionDescription localDescription { get; private set; }
+        public RTCSessionDescription? localDescription { get; private set; }
 
-        public RTCSessionDescription remoteDescription { get; private set; }
+        public RTCSessionDescription? remoteDescription { get; private set; }
 
-        public RTCSessionDescription currentLocalDescription => localDescription;
+        public RTCSessionDescription? currentLocalDescription => localDescription;
 
-        public RTCSessionDescription pendingLocalDescription => null;
+        public RTCSessionDescription? pendingLocalDescription => null;
 
-        public RTCSessionDescription currentRemoteDescription => remoteDescription;
+        public RTCSessionDescription? currentRemoteDescription => remoteDescription;
 
-        public RTCSessionDescription pendingRemoteDescription => null;
+        public RTCSessionDescription? pendingRemoteDescription => null;
 
         public RTCSignalingState signalingState { get; private set; } = RTCSignalingState.closed;
 
@@ -670,9 +644,9 @@ namespace SIPSorcery.Net
         /// </param>
         public Task setLocalDescription(RTCSessionDescriptionInit init)
         {
-            localDescription = new RTCSessionDescription { type = init.type, sdp = SDP.ParseSDPDescription(init.sdp) };
+            localDescription = new RTCSessionDescription { type = init.Type, sdp = SDP.ParseSDPDescription(init.Sdp) };
 
-            if (init.type == RTCSdpType.offer)
+            if (init.Type == SdpType.Offer)
             {
                 _rtpIceChannel.IsController = true;
             }
@@ -705,8 +679,8 @@ namespace SIPSorcery.Net
         {
             RTCSessionDescriptionInit init = new RTCSessionDescriptionInit
             {
-                sdp = sessionDescription.ToString(),
-                type = (sdpType == SdpType.answer) ? RTCSdpType.answer : RTCSdpType.offer
+                Sdp = sessionDescription.ToString(),
+                Type = (sdpType == SdpType.Answer) ? SdpType.Answer : SdpType.Offer
             };
 
             return setRemoteDescription(init);
@@ -718,15 +692,15 @@ namespace SIPSorcery.Net
         /// <param name="init">The answer/offer SDP from the remote party.</param>
         public SetDescriptionResultEnum setRemoteDescription(RTCSessionDescriptionInit init)
         {
-            remoteDescription = new RTCSessionDescription { type = init.type, sdp = SDP.ParseSDPDescription(init.sdp) };
+            remoteDescription = new RTCSessionDescription { type = init.Type, sdp = SDP.ParseSDPDescription(init.Sdp) };
 
             SDP remoteSdp = remoteDescription.sdp; // SDP.ParseSDPDescription(init.sdp);
 
-            SdpType sdpType = (init.type == RTCSdpType.offer) ? SdpType.offer : SdpType.answer;
+            SdpType sdpType = init.Type == SdpType.Offer ? SdpType.Offer : SdpType.Answer;
 
             switch (signalingState)
             {
-                case var sigState when sigState == RTCSignalingState.have_local_offer && sdpType == SdpType.offer:
+                case var sigState when sigState == RTCSignalingState.have_local_offer && sdpType == SdpType.Offer:
                     logger.LogWarning($"RTCPeerConnection received an SDP offer but was already in {sigState} state. Remote offer rejected.");
                     return SetDescriptionResultEnum.WrongSdpTypeOfferAfterOffer;
             }
@@ -774,7 +748,7 @@ namespace SIPSorcery.Net
                 if (remoteSdp.IceImplementation == IceImplementationEnum.lite) {
                     _rtpIceChannel.IsController = true;
                 }
-                if (init.type == RTCSdpType.answer)
+                if (init.Type == SdpType.Answer)
                 {
                     _rtpIceChannel.IsController = true;
                     IceRole = remoteIceRole == IceRolesEnum.passive ? IceRolesEnum.active : IceRolesEnum.passive;
@@ -841,7 +815,7 @@ namespace SIPSorcery.Net
 
                 UpdatedSctpDestinationPort();
 
-                if (init.type == RTCSdpType.offer)
+                if (init.Type == SdpType.Offer)
                 {
                     signalingState = RTCSignalingState.have_remote_offer;
                     onsignalingstatechange?.Invoke();
@@ -941,10 +915,10 @@ namespace SIPSorcery.Net
                 ann.IceRole = IceRole;
             }
 
-            RTCSessionDescriptionInit initDescription = new RTCSessionDescriptionInit
+            var initDescription = new RTCSessionDescriptionInit
             {
-                type = RTCSdpType.offer,
-                sdp = offerSdp.ToString()
+                Type = SdpType.Offer,
+                Sdp = offerSdp.ToString()
             };
 
             return initDescription;
@@ -960,9 +934,9 @@ namespace SIPSorcery.Net
         {
             var result = createOffer(null);
 
-            if (result?.sdp != null)
+            if (result?.Sdp != null)
             {
-                return SDP.ParseSDPDescription(result.sdp);
+                return SDP.ParseSDPDescription(result.Sdp);
             }
 
             return null;
@@ -978,9 +952,9 @@ namespace SIPSorcery.Net
         {
             var result = createAnswer(null);
 
-            if (result?.sdp != null)
+            if (result?.Sdp != null)
             {
-                return SDP.ParseSDPDescription(result.sdp);
+                return SDP.ParseSDPDescription(result.Sdp);
             }
 
             return null;
@@ -995,7 +969,7 @@ namespace SIPSorcery.Net
         /// </remarks>
         /// <param name="options">Optional. If supplied the options will be used to apply additional
         /// controls over the generated answer SDP.</param>
-        public RTCSessionDescriptionInit createAnswer(RTCAnswerOptions options = null)
+        public RTCSessionDescriptionInit createAnswer(RTCAnswerOptions? options = null)
         {
             if (remoteDescription == null)
             {
@@ -1045,8 +1019,8 @@ namespace SIPSorcery.Net
 
                 RTCSessionDescriptionInit initDescription = new RTCSessionDescriptionInit
                 {
-                    type = RTCSdpType.answer,
-                    sdp = answerSdp.ToString()
+                    Type = SdpType.Answer,
+                    Sdp = answerSdp.ToString()
                 };
 
                 return initDescription;

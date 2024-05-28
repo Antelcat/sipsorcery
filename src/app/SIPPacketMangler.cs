@@ -176,7 +176,7 @@ namespace SIPSorcery.SIP.App
             string remoteUAStr = sipRequest.Header.ProxyReceivedFrom;
             if (!remoteUAStr.IsNullOrBlank())
             {
-                requestIPAddress = SIPEndPoint.ParseSIPEndPoint(remoteUAStr).Address;
+                requestIPAddress = SIPEndPoint.Parse(remoteUAStr).Address;
             }
             else if (sipRequest.RemoteSIPEndPoint != null)
             {

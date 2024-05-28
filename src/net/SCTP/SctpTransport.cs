@@ -18,14 +18,13 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using SIPSorcery.Interfaces;
 using SIPSorcery.Sys;
-using TinyJson;
 
 namespace SIPSorcery.Net
 {
@@ -33,9 +32,9 @@ namespace SIPSorcery.Net
     /// The opaque cookie structure that will be sent in response to an SCTP INIT
     /// packet.
     /// </summary>
-    public struct SctpTransportCookie
+    public struct SctpTransportCookie : IJsonify
     {
-        public static SctpTransportCookie Empty = new SctpTransportCookie() { _isEmpty = true };
+        public static SctpTransportCookie Empty = new() { _isEmpty = true };
 
         public ushort SourcePort { get; set; }
         public ushort DestinationPort { get; set; }
@@ -72,7 +71,7 @@ namespace SIPSorcery.Net
         /// </summary>
         public const int DEFAULT_COOKIE_LIFETIME_SECONDS = 60;
 
-        private static ILogger logger = SIPSorcery.LogFactory.CreateLogger<SctpTransport>();
+        private static ILogger logger = LogFactory.CreateLogger<SctpTransport>();
 
         /// <summary>
         /// Ephemeral secret key to use for generating cookie HMAC's. The purpose of the HMAC is
@@ -100,7 +99,7 @@ namespace SIPSorcery.Net
             Crypto.GetRandomBytes(_hmacKey);
         }
 
-        protected void GotInit(SctpPacket initPacket, IPEndPoint remoteEndPoint)
+        protected void GotInit(SctpPacket initPacket, IPEndPoint? remoteEndPoint)
         {
             // INIT packets have specific processing rules in order to prevent resource exhaustion.
             // See Section 5 of RFC 4960 https://tools.ietf.org/html/rfc4960#section-5 "Association Initialization".
@@ -176,15 +175,15 @@ namespace SIPSorcery.Net
         /// packet containing an INIT chunk.
         /// </summary>
         /// <param name="initPacket">The received packet containing the INIT chunk.</param>
-        /// <param name="remoteEP">Optional. The remote IP end point the INIT packet was
+        /// <param name="remoteEndPoint">Optional. The remote IP end point the INIT packet was
         /// received on. For transports that don't use an IP transport directly this parameter
         /// can be set to null and it will not form part of the COOKIE ECHO checks.</param>
         /// <returns>An SCTP packet with a single INIT ACK chunk.</returns>
-        protected SctpPacket GetInitAck(SctpPacket initPacket, IPEndPoint remoteEP)
+        protected SctpPacket GetInitAck(SctpPacket initPacket, IPEndPoint? remoteEndPoint)
         {
-            SctpInitChunk initChunk = initPacket.Chunks.Single(x => x.KnownType == SctpChunkType.INIT) as SctpInitChunk;
+            var initChunk = initPacket.Chunks.OfType<SctpInitChunk>().First();
 
-            SctpPacket initAckPacket = new SctpPacket(
+            var initAckPacket = new SctpPacket(
                 initPacket.Header.DestinationPort,
                 initPacket.Header.SourcePort,
                 initChunk.InitiateTag);
@@ -195,7 +194,7 @@ namespace SIPSorcery.Net
                 initChunk.InitiateTag,
                 initChunk.InitialTSN,
                 initChunk.ARwnd,
-                remoteEP != null ? remoteEP.ToString() : string.Empty,
+                remoteEndPoint?.ToString() ?? string.Empty,
                 (int)(initChunk.CookiePreservative / 1000));
 
             var json = cookie.ToJson();
@@ -237,11 +236,11 @@ namespace SIPSorcery.Net
         {
             var cookieEcho = sctpPacket.Chunks.Single(x => x.KnownType == SctpChunkType.COOKIE_ECHO);
             var cookieBuffer = cookieEcho.ChunkValue;
-            var cookie = JSONParser.FromJson<SctpTransportCookie>(Encoding.UTF8.GetString(cookieBuffer));
+            var cookie = Encoding.UTF8.GetString(cookieBuffer).FromJson<SctpTransportCookie>();
 
             logger.LogDebug($"Cookie: {cookie.ToJson()}");
 
-            string calculatedHMAC = GetCookieHMAC(cookieBuffer);
+            var calculatedHMAC = GetCookieHMAC(cookieBuffer);
             if (calculatedHMAC != cookie.HMAC)
             {
                 logger.LogWarning($"SCTP COOKIE ECHO chunk had an invalid HMAC, calculated {calculatedHMAC}, cookie {cookie.HMAC}.");
@@ -279,17 +278,14 @@ namespace SIPSorcery.Net
         /// <returns>True if the cookie is determined as valid, false if not.</returns>
         protected string GetCookieHMAC(byte[] buffer)
         {
-            var cookie = JSONParser.FromJson<SctpTransportCookie>(Encoding.UTF8.GetString(buffer));
-            string hmacCalculated = null;
+            var cookie = Encoding.UTF8.GetString(buffer).FromJson<SctpTransportCookie>();
             cookie.HMAC = string.Empty;
 
-            byte[] cookiePreImage = Encoding.UTF8.GetBytes(cookie.ToJson());
+            var cookiePreImage = Encoding.UTF8.GetBytes(cookie.ToJson());
 
-            using (HMACSHA256 hmac = new HMACSHA256(_hmacKey))
-            {
-                var result = hmac.ComputeHash(cookiePreImage);
-                hmacCalculated = result.HexStr();
-            }
+            using var hmac = new HMACSHA256(_hmacKey);
+            var result = hmac.ComputeHash(cookiePreImage);
+            var hmacCalculated = result.HexStr();
 
             return hmacCalculated;
         }

@@ -36,12 +36,14 @@ namespace SIPSorcery.SIP
         }
 
         private const string SIP_RESPONSE_PREFIX = "SIP";
-        private const string SIP_MESSAGE_IDENTIFIER = "SIP";    // String that must be in a message buffer to be recognised as a SIP message and processed.
+        private const string
+            SIP_MESSAGE_IDENTIFIER = "SIP"; // String that must be in a message buffer to be recognised as a SIP message and processed.
 
         private static int m_sipFullVersionStrLen = SIPConstants.SIP_FULLVERSION_STRING.Length;
         private static int m_minFirstLineLength = 7;
         private static string m_CRLF = SIPConstants.CRLF;
-        private static string m_sipMessageDelimiter = SIPConstants.CRLF + SIPConstants.CRLF;    // The delimiting character sequence for messages in a stream.
+        private static string
+            m_sipMessageDelimiter = SIPConstants.CRLF + SIPConstants.CRLF; // The delimiting character sequence for messages in a stream.
 
         private static ILogger logger = Log.Logger;
 
@@ -67,8 +69,8 @@ namespace SIPSorcery.SIP
         public byte[] RawBuffer;
 
         public DateTime Created = DateTime.Now;
-        public SIPEndPoint RemoteSIPEndPoint;               // The remote IP socket the message was received from or sent to.
-        public SIPEndPoint LocalSIPEndPoint;                // The local SIP socket the message was received on or sent from.
+        public SIPEndPoint RemoteSIPEndPoint; // The remote IP socket the message was received from or sent to.
+        public SIPEndPoint LocalSIPEndPoint; // The local SIP socket the message was received on or sent from.
 
         public static SIPMessageBuffer ParseSIPMessage(
             byte[] buffer,
@@ -86,10 +88,10 @@ namespace SIPSorcery.SIP
         /// <param name="sipEncoding">SIP protocol encoding, according to RFC should be UTF-8 </param>
         /// <returns>If successful a SIP message or null if not.</returns>
         public static SIPMessageBuffer ParseSIPMessage(
-            byte[] buffer, 
+            byte[] buffer,
             Encoding sipEncoding,
             Encoding sipBodyEncoding,
-            SIPEndPoint localSIPEndPoint, 
+            SIPEndPoint localSIPEndPoint,
             SIPEndPoint remoteSIPEndPoint)
         {
 
@@ -109,7 +111,7 @@ namespace SIPSorcery.SIP
             }
             else
             {
-                var sipMessage = new SIPMessageBuffer(sipEncoding,sipBodyEncoding);
+                var sipMessage = new SIPMessageBuffer(sipEncoding, sipBodyEncoding);
 
                 sipMessage.RawBuffer = buffer;
                 sipMessage.LocalSIPEndPoint = localSIPEndPoint;
@@ -118,7 +120,7 @@ namespace SIPSorcery.SIP
                 // For connection oriented transports the same connection should be used for responses and subsequent requests.
                 if (sipMessage.LocalSIPEndPoint != null && remoteSIPEndPoint.ConnectionID != null)
                 {
-                    sipMessage.LocalSIPEndPoint.ConnectionID = remoteSIPEndPoint.ConnectionID;
+                    sipMessage.LocalSIPEndPoint = sipMessage.LocalSIPEndPoint with { ConnectionID = remoteSIPEndPoint.ConnectionID };
                 }
 
                 string message = sipEncoding.GetString(buffer);
@@ -165,12 +167,17 @@ namespace SIPSorcery.SIP
                 }
             }
         }
+
         public static SIPMessageBuffer ParseSIPMessage(
             string message,
             SIPEndPoint localSIPEndPoint,
             SIPEndPoint remoteSIPEndPoint)
         {
-            return ParseSIPMessage(SIPConstants.DEFAULT_ENCODING.GetBytes(message), SIPConstants.DEFAULT_ENCODING, SIPConstants.DEFAULT_ENCODING, localSIPEndPoint, remoteSIPEndPoint);
+            return ParseSIPMessage(SIPConstants.DEFAULT_ENCODING.GetBytes(message),
+                SIPConstants.DEFAULT_ENCODING,
+                SIPConstants.DEFAULT_ENCODING,
+                localSIPEndPoint,
+                remoteSIPEndPoint);
         }
 
         /// <summary>
@@ -186,10 +193,10 @@ namespace SIPSorcery.SIP
             string message,
             Encoding sipEncoding,
             Encoding sipBodyEncoding,
-            SIPEndPoint localSIPEndPoint, 
+            SIPEndPoint localSIPEndPoint,
             SIPEndPoint remoteSIPEndPoint)
         {
-            return ParseSIPMessage(sipEncoding.GetBytes(message), sipEncoding,sipBodyEncoding, localSIPEndPoint, remoteSIPEndPoint);
+            return ParseSIPMessage(sipEncoding.GetBytes(message), sipEncoding, sipBodyEncoding, localSIPEndPoint, remoteSIPEndPoint);
         }
 
         //rj2: check if message could be "well"known Ping message
@@ -244,17 +251,17 @@ namespace SIPSorcery.SIP
         /// <param name="length">The position in the buffer that indicates the end of the received bytes.</param>
         /// <param name="sipEncoding"></param>
         /// <returns>A byte array holding a full SIP message or if no full SIP messages are available null.</returns>
-        public static byte[] ParseSIPMessageFromStream(
+        public static byte[]? ParseSIPMessageFromStream(
             byte[] receiveBuffer,
-            int start, 
-            int length, 
+            int start,
+            int length,
             Encoding sipEncoding,
             out int bytesSkipped)
         {
             // NAT keep-alives can be interspersed between SIP messages. Treat any non-letter character
             // at the start of a receive as a non SIP transmission and skip over it.
             bytesSkipped = 0;
-            bool letterCharFound = false;
+            var letterCharFound = false;
             while (!letterCharFound && start < length)
             {
                 if ((int)receiveBuffer[start] >= 65)
@@ -299,7 +306,7 @@ namespace SIPSorcery.SIP
         /// <param name="end">The position in the buffer to stop the search at.</param>
         /// <param name="sipEncoding"></param>
         /// <returns>If the Content-Length header is found the value if contains otherwise 0.</returns>
-        public static int GetContentLength(byte[] buffer, int start, int end,Encoding sipEncoding)
+        public static int GetContentLength(byte[] buffer, int start, int end, Encoding sipEncoding)
         {
             if (buffer == null || start > end || buffer.Length < end)
             {
@@ -354,7 +361,8 @@ namespace SIPSorcery.SIP
                         inContentHeaderPosn = 0;
                     }
 
-                    if (buffer[index] == compactContentHeaderBytes[inCompactContentHeaderPosn] || buffer[index] == compactContentHeaderBytes[inCompactContentHeaderPosn] + 32)
+                    if (buffer[index] == compactContentHeaderBytes[inCompactContentHeaderPosn] ||
+                        buffer[index] == compactContentHeaderBytes[inCompactContentHeaderPosn] + 32)
                     {
                         inCompactContentHeaderPosn++;
 

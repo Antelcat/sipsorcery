@@ -146,7 +146,7 @@ namespace SIPSorcery.SIP
             RemoteSDP = remoteSDP;
             Inserted = DateTime.UtcNow;
             Direction = SIPCallDirection.None;
-            RemoteSIPEndPoint = remoteEndPoint?.CopyOf();
+            RemoteSIPEndPoint = remoteEndPoint with {};
         }
 
         /// <summary>
@@ -183,8 +183,8 @@ namespace SIPSorcery.SIP
             // Set the dialogue remote target taking into account optional Proxy header fields.
             // No mangling takes place. All the information is recorded to allow an application to perform mangling 
             // if so required.
-            SIPEndPoint remoteEndPointViaProxy = SIPEndPoint.ParseSIPEndPoint(inviteReq.Header.ProxyReceivedFrom);
-            RemoteSIPEndPoint = remoteEndPointViaProxy ?? inviteReq.RemoteSIPEndPoint.CopyOf();
+            SIPEndPoint remoteEndPointViaProxy = SIPEndPoint.Parse(inviteReq.Header.ProxyReceivedFrom);
+            RemoteSIPEndPoint = remoteEndPointViaProxy ?? inviteReq.RemoteSIPEndPoint with { };
             ProxySendFrom = inviteReq.Header.ProxyReceivedOn;
 
             if (inviteReq.Header.Contact != null && inviteReq.Header.Contact.Count > 0)
@@ -254,8 +254,8 @@ namespace SIPSorcery.SIP
                 RemoteTarget = uacInviteTransaction.TransactionRequest.URI.CopyOf();
             }
 
-            SIPEndPoint remoteEndPointViaProxy = SIPEndPoint.ParseSIPEndPoint(finalResponse.Header.ProxyReceivedFrom);
-            RemoteSIPEndPoint = remoteEndPointViaProxy ?? finalResponse.RemoteSIPEndPoint.CopyOf();
+            SIPEndPoint remoteEndPointViaProxy = SIPEndPoint.Parse(finalResponse.Header.ProxyReceivedFrom);
+            RemoteSIPEndPoint = remoteEndPointViaProxy ?? finalResponse.RemoteSIPEndPoint with{};
 
             ProxySendFrom = uacInviteTransaction.TransactionFinalResponse.Header.ProxyReceivedOn;
 
@@ -296,8 +296,8 @@ namespace SIPSorcery.SIP
             Inserted = DateTime.UtcNow;
             Direction = SIPCallDirection.Out;
 
-            SIPEndPoint remoteEndPointViaProxy = SIPEndPoint.ParseSIPEndPoint(nonInviteRequest.Header.ProxyReceivedFrom);
-            RemoteSIPEndPoint = remoteEndPointViaProxy ?? nonInviteRequest.RemoteSIPEndPoint.CopyOf();
+            SIPEndPoint remoteEndPointViaProxy = SIPEndPoint.Parse(nonInviteRequest.Header.ProxyReceivedFrom);
+            RemoteSIPEndPoint = remoteEndPointViaProxy ?? nonInviteRequest.RemoteSIPEndPoint with{};
 
             // Set the dialogue remote target taking into account optional proxy header fields.
             // No mangling takes place. All the information is recorded to allow an application to perform mangling 
@@ -349,7 +349,7 @@ namespace SIPSorcery.SIP
                 }
                 else if (!ProxySendFrom.IsNullOrBlank())
                 {
-                    byeOutboundProxy = SIPEndPoint.ParseSIPEndPoint(ProxySendFrom);
+                    byeOutboundProxy = SIPEndPoint.Parse(ProxySendFrom);
                 }
                 else if (outboundProxy != null)
                 {

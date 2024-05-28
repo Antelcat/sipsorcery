@@ -103,8 +103,8 @@ namespace SIPSorcery.SIP
                 if (e.RawData?.Length > 0)
                 {
                     Channel.SIPMessageReceived?.Invoke(Channel,
-                        new SIPEndPoint(_sipProtocol, _localEndPoint, Channel.ID, this.ID),
-                        new SIPEndPoint(_sipProtocol, _remoteEndPoint, Channel.ID, this.ID),
+                        new SIPEndPoint(_localEndPoint, _sipProtocol, Channel.ID, this.ID),
+                        new SIPEndPoint(_remoteEndPoint, _sipProtocol, Channel.ID, this.ID),
                         e.RawData);
                 }
             }

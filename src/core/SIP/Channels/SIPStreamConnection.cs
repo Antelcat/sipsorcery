@@ -144,8 +144,7 @@ namespace SIPSorcery.SIP
         {
             RecvEndPosn += bytesRead;
 
-            int bytesSkipped = 0;
-            byte[] sipMsgBuffer = SIPMessageBuffer.ParseSIPMessageFromStream(buffer, RecvStartPosn, RecvEndPosn, m_sipEncoding, out bytesSkipped);
+            var sipMsgBuffer = SIPMessageBuffer.ParseSIPMessageFromStream(buffer, RecvStartPosn, RecvEndPosn, m_sipEncoding, out var bytesSkipped);
 
             while (sipMsgBuffer != null)
             {
@@ -153,8 +152,8 @@ namespace SIPSorcery.SIP
                 if (SIPMessageReceived != null)
                 {
                     LastTransmission = DateTime.Now;
-                    SIPEndPoint localEndPoint = new SIPEndPoint(ConnectionProtocol, StreamSocket.LocalEndPoint as IPEndPoint, recvChannel.ID, ConnectionID);
-                    SIPEndPoint remoteEndPoint = new SIPEndPoint(ConnectionProtocol, RemoteSIPEndPoint.GetIPEndPoint(), recvChannel.ID, ConnectionID);
+                    var localEndPoint = new SIPEndPoint((IPEndPoint)StreamSocket.LocalEndPoint, ConnectionProtocol, recvChannel.ID, ConnectionID);
+                    var remoteEndPoint = new SIPEndPoint(RemoteSIPEndPoint.GetIPEndPoint(), ConnectionProtocol, recvChannel.ID, ConnectionID);
                     SIPMessageReceived(recvChannel, localEndPoint, remoteEndPoint, sipMsgBuffer);
                 }
 

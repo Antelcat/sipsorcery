@@ -309,7 +309,7 @@ namespace SIPSorcery.Net
             {
                 logger.LogWarning($"SCTP association cannot initialise with a cookie after an abort or shutdown.");
             }
-            else if (!(State == SctpAssociationState.Closed || State == SctpAssociationState.CookieEchoed))
+            else if (State is not (SctpAssociationState.Closed or SctpAssociationState.CookieEchoed))
             {
                 throw new ApplicationException($"SCTP association cannot initialise with a cookie in state {State}.");
             }

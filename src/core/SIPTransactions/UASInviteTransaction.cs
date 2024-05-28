@@ -68,8 +68,8 @@ namespace SIPSorcery.SIP
             }
 
             //logger.LogDebug("New UASTransaction (" + TransactionId + ") for " + TransactionRequest.URI.ToString() + " to " + RemoteEndPoint + ".");
-            SIPEndPoint localEP = SIPEndPoint.TryParse(sipRequest.Header.ProxyReceivedOn) ?? sipRequest.LocalSIPEndPoint;
-            SIPEndPoint remoteEP = SIPEndPoint.TryParse(sipRequest.Header.ProxyReceivedFrom) ?? sipRequest.RemoteSIPEndPoint;
+            SIPEndPoint localEP = SIPEndPoint.Parse(sipRequest.Header.ProxyReceivedOn) ?? sipRequest.LocalSIPEndPoint;
+            SIPEndPoint remoteEP = SIPEndPoint.Parse(sipRequest.Header.ProxyReceivedFrom) ?? sipRequest.RemoteSIPEndPoint;
 
             if (!noCDR)
             {

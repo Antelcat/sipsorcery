@@ -204,8 +204,8 @@ namespace SIPSorcery.SIP
             }
 
             copy.Created = Created;
-            copy.LocalSIPEndPoint = LocalSIPEndPoint?.CopyOf();
-            copy.RemoteSIPEndPoint = RemoteSIPEndPoint?.CopyOf();
+            copy.LocalSIPEndPoint = LocalSIPEndPoint with {};
+            copy.RemoteSIPEndPoint = RemoteSIPEndPoint with {};
             copy.SendFromHintChannelID = SendFromHintChannelID;
             copy.SendFromHintConnectionID = SendFromHintConnectionID;
 

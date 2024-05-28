@@ -243,7 +243,7 @@ namespace SIPSorcery.SIP.App
                 {
                     var firstChannel = m_transport.GetSIPChannels()[0];
                     return firstChannel.GetContactURI(SIPSchemesEnum.sip,
-                        new SIPEndPoint(firstChannel.SIPProtocol, SIPChannel.InternetDefaultAddress, 0));
+                        new SIPEndPoint(SIPChannel.InternetDefaultAddress, 0, firstChannel.SIPProtocol));
                 }
                 else
                 {
@@ -700,7 +700,7 @@ namespace SIPSorcery.SIP.App
                 {
                     // The SDP offer was included in the INVITE request.
                     SDP remoteSdp = SDP.ParseSDPDescription(sipRequest.Body);
-                    var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.offer, remoteSdp);
+                    var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.Offer, remoteSdp);
 
                     if (setRemoteResult != SetDescriptionResultEnum.OK)
                     {
@@ -746,7 +746,7 @@ namespace SIPSorcery.SIP.App
                     {
                         // If the initial INVITE did not contain an offer then the remote description will not yet be set.
                         var remoteSDP = SDP.ParseSDPDescription(m_sipDialogue.RemoteSDP);
-                        var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.offer, remoteSDP);
+                        var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.Offer, remoteSDP);
 
                         if (setRemoteResult != SetDescriptionResultEnum.OK)
                         {
@@ -1010,7 +1010,7 @@ namespace SIPSorcery.SIP.App
                     }
                     else
                     {
-                        var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.offer, offer);
+                        var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.Offer, offer);
 
                         if (setRemoteResult != SetDescriptionResultEnum.OK)
                         {
@@ -1460,7 +1460,7 @@ namespace SIPSorcery.SIP.App
                 {
                     // Update the remote party's SDP.
                     m_sipDialogue.RemoteSDP = sipResponse.Body;
-                    MediaSession.SetRemoteDescription(SdpType.answer, SDP.ParseSDPDescription(sipResponse.Body));
+                    MediaSession.SetRemoteDescription(SdpType.Answer, SDP.ParseSDPDescription(sipResponse.Body));
                 }
             }
             else if ((sipResponse.Status == SIPResponseStatusCodesEnum.ProxyAuthenticationRequired || sipResponse.Status == SIPResponseStatusCodesEnum.Unauthorised) && m_callDescriptor != null)
@@ -1552,7 +1552,7 @@ namespace SIPSorcery.SIP.App
                 if (sipResponse.Status == SIPResponseStatusCodesEnum.SessionProgress &&
                     sipResponse.Body != null)
                 {
-                    var setDescriptionResult = MediaSession.SetRemoteDescription(SdpType.answer, SDP.ParseSDPDescription(sipResponse.Body));
+                    var setDescriptionResult = MediaSession.SetRemoteDescription(SdpType.Answer, SDP.ParseSDPDescription(sipResponse.Body));
                     logger.LogDebug($"Set remote description for early media result {setDescriptionResult}.");
 
                     if (setDescriptionResult == SetDescriptionResultEnum.OK)
@@ -1627,7 +1627,7 @@ namespace SIPSorcery.SIP.App
                 }
                 else
                 {
-                    var setDescriptionResult = MediaSession.SetRemoteDescription(SdpType.answer, SDP.ParseSDPDescription(sipResponse.Body));
+                    var setDescriptionResult = MediaSession.SetRemoteDescription(SdpType.Answer, SDP.ParseSDPDescription(sipResponse.Body));
 
                     if (setDescriptionResult == SetDescriptionResultEnum.OK)
                     {

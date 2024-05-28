@@ -59,7 +59,7 @@ namespace SIPSorcery.Net
         {
             m_localSecurityDescriptions = securityDescription;
 
-            if (sdpType == SdpType.offer)
+            if (sdpType == SdpType.Offer)
             {
                IsNegotiationComplete = false;
                return true;
@@ -95,7 +95,7 @@ namespace SIPSorcery.Net
         {
             m_remoteSecurityDescriptions = securityDescription;
 
-            if (sdpType == SdpType.offer)
+            if (sdpType == SdpType.Offer)
             {
                 IsNegotiationComplete = false;
                 return true;

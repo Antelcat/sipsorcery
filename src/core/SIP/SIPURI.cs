@@ -28,7 +28,7 @@ namespace SIPSorcery.SIP
     [DataContract]
     public class SIPURI
     {
-        public static SIPURI None = new SIPURI();
+        public static SIPURI None = new();
 
         public const char SCHEME_ADDR_SEPARATOR = ':';
         public const char USER_HOST_SEPARATOR = '@';
@@ -445,7 +445,7 @@ namespace SIPSorcery.SIP
             }
         }
 
-        public static SIPURI ParseSIPURIRelaxed(string partialURI)
+        public static SIPURI? ParseSIPURIRelaxed(string partialURI)
         {
             if (partialURI == null || partialURI.Trim().Length == 0)
             {
@@ -554,24 +554,9 @@ namespace SIPSorcery.SIP
             return User + USER_HOST_SEPARATOR + Host;
         }
 
-        public SIPEndPoint ToSIPEndPoint()
+        public SIPEndPoint? ToSIPEndPoint()
         {
-            if (IPSocket.TryParseIPEndPoint(Host, out var ipEndPoint))
-            {
-                if (ipEndPoint.Port != 0)
-                {
-                    return new SIPEndPoint(Protocol, ipEndPoint);
-                }
-                else
-                {
-                    ipEndPoint.Port = SIPConstants.GetDefaultPort(Protocol);
-                    return new SIPEndPoint(Protocol, ipEndPoint);
-                }
-            }
-            else
-            {
-                return null;
-            }
+            return IPSocket.TryParseIPEndPoint(Host, out var ipEndPoint) ? new SIPEndPoint(ipEndPoint, Protocol) : null;
         }
 
         private void ParseParamsAndHeaders(string paramsAndHeaders)

@@ -13,6 +13,11 @@
 // BSD 3-Clause "New" or "Revised" License, see included LICENSE.md file.
 //-----------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using SIPSorcery.Interfaces;
+
 namespace SIPSorcery.Net
 {
     /// <summary>
@@ -101,45 +106,12 @@ namespace SIPSorcery.Net
     /// <remarks>
     /// As specified in https://www.w3.org/TR/webrtc/#dom-rtcicecandidateinit.
     /// </remarks>
-    public class RTCIceCandidateInit
+    public class RTCIceCandidateInit : IJsonify
     {
-        public string candidate { get; set; }
-        public string sdpMid { get; set; }
-        public ushort sdpMLineIndex { get; set; }
-        public string usernameFragment { get; set; }
-
-        public string toJSON()
-        {
-            //return "{" +
-            //     $"  \"sdpMid\": \"{sdpMid ?? sdpMLineIndex.ToString()}\"," +
-            //     $"  \"sdpMLineIndex\": {sdpMLineIndex}," +
-            //     $"  \"usernameFragment\": \"{usernameFragment}\"," +
-            //     $"  \"candidate\": \"{candidate}\"" +
-            //     "}";
-
-            return TinyJson.JSONWriter.ToJson(this);
-        }
-
-        public static bool TryParse(string json, out RTCIceCandidateInit init)
-        {
-            //init = JsonSerializer.Deserialize< RTCIceCandidateInit>(json);
-
-            init = null;
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return false;
-            }
-            else
-            {
-                init = TinyJson.JSONParser.FromJson<RTCIceCandidateInit>(json);
-
-                // To qualify as parsed all required fields must be set.
-                return init != null &&
-                init.candidate != null &&
-                init.sdpMid != null;
-            }
-        }
+        [JsonPropertyName("candidate")] public string candidate { get; set; }
+        [JsonPropertyName("sdpMid")] public string sdpMid { get; set; }
+        [JsonPropertyName("sdpMLineIndex")] public ushort sdpMLineIndex { get; set; }
+        [JsonPropertyName("usernameFragment")] public string? usernameFragment { get; set; }
     }
 
     /// <summary>
@@ -249,7 +221,6 @@ namespace SIPSorcery.Net
         string relatedAddress { get; }
         ushort relatedPort { get; }
         string usernameFragment { get; }
-        //RTCIceCandidateInit toJSON();
         string toJSON();
     }
 }

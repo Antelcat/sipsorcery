@@ -122,10 +122,7 @@ namespace SIPSorcery.SIP
         /// The SIP end point this channel is listening on. Note it can contain
         /// IPAddress.Any which means it can match multiple IP addresses.
         /// </summary>
-        public SIPEndPoint ListeningSIPEndPoint
-        {
-            get { return new SIPEndPoint(SIPProtocol, ListeningIPAddress, Port, ID, null); }
-        }
+        public SIPEndPoint ListeningSIPEndPoint => new(ListeningIPAddress, Port, SIPProtocol, ID);
 
         /// <summary>
         /// If the underlying transport channel is reliable, such as TCP, this will be set to true.
@@ -290,7 +287,7 @@ namespace SIPSorcery.SIP
         {
             IPAddress dstAddress = dstEndPoint.GetIPEndPoint().Address;
             IPAddress localAddress = GetLocalIPAddressForDestination(dstAddress);
-            return new SIPEndPoint(SIPProtocol, localAddress, Port, ID, null);
+            return new SIPEndPoint(localAddress, Port, SIPProtocol, ID);
         }
 
         /// <summary>

@@ -30,7 +30,7 @@ namespace SIPSorcery.Sys
     /// <summary>
     /// Helper class to provide network services.
     /// </summary>
-    public class NetServices
+    public static class NetServices
     {
         private const int RTP_RECEIVE_BUFFER_SIZE = 1000000;
         private const int RTP_SEND_BUFFER_SIZE = 1000000;

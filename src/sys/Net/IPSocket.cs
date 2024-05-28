@@ -25,7 +25,7 @@ using System.Net.Sockets;
 
 namespace SIPSorcery.Sys
 {
-    public class IPSocket
+    public static class IPSocket
     {
         /// <summary>
         /// Specifies the minimum acceptable value for the <see cref='System.Net.IPEndPoint'/> Port property.

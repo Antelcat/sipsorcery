@@ -94,7 +94,7 @@ namespace SIPSorcery.SIP.App
             SIPEndPoint outboundProxy)
         {
             m_sipTransport = sipTransport;
-            m_outboundProxy = outboundProxy?.CopyOf();
+            m_outboundProxy = outboundProxy with { };
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace SIPSorcery.SIP.App
                 //SIPEndPoint outboundProxyEndPoint = SIPEndPoint.ParseSIPEndPoint(sipCallDescriptor.ProxySendFrom);
                 //m_outboundProxy = new SIPEndPoint(SIPProtocolsEnum.udp, outboundProxyEndPoint.Address, SIPConstants.DEFAULT_SIP_PORT);
                 //m_serverEndPoint = m_outboundProxy;
-                m_outboundProxy = SIPEndPoint.ParseSIPEndPoint(sipCallDescriptor.ProxySendFrom);
+                m_outboundProxy = SIPEndPoint.Parse(sipCallDescriptor.ProxySendFrom);
                 serverEndPoint = m_outboundProxy;
                 logger.LogDebug($"SIPClientUserAgent Call using alternate outbound proxy of {serverEndPoint}.");
             }

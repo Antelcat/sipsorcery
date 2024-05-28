@@ -187,7 +187,7 @@ namespace SIPSorcery.SIP
 
                     if (!Closed)
                     {
-                        var remoteEndPoint = new SIPEndPoint(SIPProtocol, clientSocket.RemoteEndPoint as IPEndPoint);
+                        var remoteEndPoint = new SIPEndPoint((IPEndPoint)clientSocket.RemoteEndPoint, SIPProtocol);
 
                         logger.LogDebug($"SIP {ProtDescr} Channel connection accepted from {remoteEndPoint} by {ListeningSIPEndPoint}.");
 
@@ -399,8 +399,8 @@ namespace SIPSorcery.SIP
                 {
                     logger.LogDebug($"ConnectAsync SIP {ProtDescr} Channel connect completed result for {ListeningSIPEndPoint}->{dstEndPoint} {connectTcs.Task.Result}.");
 
-                    var remoteSIPEndPoint = new SIPEndPoint(SIPProtocol, clientSocket.RemoteEndPoint as IPEndPoint);
-                    SIPStreamConnection sipStmConn = new SIPStreamConnection(clientSocket,SIPEncoding,SIPBodyEncoding,  remoteSIPEndPoint, SIPProtocol);
+                    var remoteSIPEndPoint = new SIPEndPoint((IPEndPoint)clientSocket.RemoteEndPoint, SIPProtocol);
+                    var sipStmConn = new SIPStreamConnection(clientSocket,SIPEncoding,SIPBodyEncoding,  remoteSIPEndPoint, SIPProtocol);
                     sipStmConn.SIPMessageReceived += SIPTCPMessageReceived;
 
                     var postConnectResult = await OnClientConnect(sipStmConn, serverCertificateName).ConfigureAwait(false);

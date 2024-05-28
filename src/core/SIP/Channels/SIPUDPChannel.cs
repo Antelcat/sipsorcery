@@ -126,7 +126,7 @@ namespace SIPSorcery.SIP
 
         private void EndReceiveFrom(IAsyncResult ar)
         {
-            EndPoint remoteEP = (ListeningIPAddress.AddressFamily == AddressFamily.InterNetwork) ? new IPEndPoint(IPAddress.Any, 0) : new IPEndPoint(IPAddress.IPv6Any, 0);
+            EndPoint remoteEP = ListeningIPAddress.AddressFamily == AddressFamily.InterNetwork ? new IPEndPoint(IPAddress.Any, 0) : new IPEndPoint(IPAddress.IPv6Any, 0);
 
             try
             {
@@ -153,9 +153,9 @@ namespace SIPSorcery.SIP
                         // The calls have been changed to Begin/EndReceiveFrom in order to support Android. The consequence is the localEndPoint
                         // parameter for the SIPMessageReceived will have an IP address of 0.0.0.0 or [::0] if wildcard addresses are in use.
 
-                        SIPEndPoint remoteEndPoint = new SIPEndPoint(SIPProtocolsEnum.udp, remoteEP as IPEndPoint, ID, null);
+                        SIPEndPoint remoteEndPoint = new SIPEndPoint((IPEndPoint)remoteEP, SIPProtocolsEnum.udp, ID);
                         //SIPEndPoint localEndPoint = new SIPEndPoint(SIPProtocolsEnum.udp, new IPEndPoint(packetInfo.Address, Port), ID, null);
-                        SIPEndPoint localEndPoint = new SIPEndPoint(SIPProtocolsEnum.udp, new IPEndPoint(ListeningIPAddress, Port), ID, null);
+                        SIPEndPoint localEndPoint = new SIPEndPoint(new IPEndPoint(ListeningIPAddress, Port), SIPProtocolsEnum.udp, ID);
                         byte[] sipMsgBuffer = new byte[bytesRead];
                         Buffer.BlockCopy(m_recvBuffer, 0, sipMsgBuffer, 0, bytesRead);
                         SIPMessageReceived?.Invoke(this, localEndPoint, remoteEndPoint, sipMsgBuffer);
@@ -167,7 +167,7 @@ namespace SIPSorcery.SIP
                 if (remoteEP != null)
                 {
                     // Note the SIPEndPoint is being used to take care of any IPv4 mapped to IPv6 addresses.
-                    SIPEndPoint remSIPEndPoint = new SIPEndPoint(SIPProtocolsEnum.udp, remoteEP as IPEndPoint);
+                    SIPEndPoint remSIPEndPoint = new SIPEndPoint((IPEndPoint)remoteEP);
 
                     // This exception can occur as the result of a Send operation. It's caused by an ICMP packet from a remote host
                     // rejecting an incoming UDP packet. If that happens we want to stop further sends to the socket for a short period.

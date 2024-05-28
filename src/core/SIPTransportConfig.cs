@@ -166,12 +166,12 @@ namespace SIPSorcery.SIP
 
             if (sipSocketString.StartsWith(ALL_LOCAL_IPADDRESSES_KEY))
             {
-                return new List<SIPEndPoint> { new SIPEndPoint(sipProtocol, new IPEndPoint(IPAddress.Any, port)) };
+                return new List<SIPEndPoint> { new(IPAddress.Any, port, sipProtocol) };
             }
             else
             {
                 var ipAddress = IPAddress.Parse(IPSocket.ParseHostFromSocket(sipSocketString));
-                return new List<SIPEndPoint> { new SIPEndPoint(sipProtocol, new IPEndPoint(ipAddress, port)) };
+                return new List<SIPEndPoint> { new(ipAddress, port, sipProtocol) };
             }
         }
     }

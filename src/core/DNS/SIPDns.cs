@@ -119,7 +119,7 @@ namespace SIPSorcery.SIP
             if (IPAddress.TryParse(uri.MAddrOrHostAddress, out var ipAddress))
             {
                 // Target is already an IP address, no DNS lookup required.
-                return new SIPEndPoint(uri.Protocol, ipAddress, uriPort);
+                return new SIPEndPoint(ipAddress, uriPort, uri.Protocol);
             }
             else if (!uri.MAddrOrHostAddress.Contains(".") || uri.MAddrOrHostAddress.EndsWith(MDNS_TLD))
             {
@@ -166,7 +166,7 @@ namespace SIPSorcery.SIP
             if (IPAddress.TryParse(uri.MAddrOrHostAddress, out var ipAddress))
             {
                 // Target is already an IP address, no DNS lookup required.
-                return Task.FromResult(new SIPEndPoint(uri.Protocol, ipAddress, uriPort));
+                return Task.FromResult(new SIPEndPoint(ipAddress, uriPort, uri.Protocol));
             }
             else
             {
@@ -433,18 +433,12 @@ namespace SIPSorcery.SIP
         /// <returns>An IP end point or null.</returns>
         private static SIPEndPoint GetFromLookupResult(SIPProtocolsEnum protocol, DnsResourceRecord addrRecord, int port)
         {
-            if (addrRecord is AaaaRecord)
+            return addrRecord switch
             {
-                return new SIPEndPoint(protocol, (addrRecord as AaaaRecord).Address, port);
-            }
-            else if (addrRecord is ARecord)
-            {
-                return new SIPEndPoint(protocol, (addrRecord as ARecord).Address, port);
-            }
-            else
-            {
-                return null;
-            }
+                AaaaRecord aaaaRecord => new SIPEndPoint(aaaaRecord.Address, port, protocol),
+                ARecord aRecord => new SIPEndPoint(aRecord.Address, port, protocol),
+                _ => SIPEndPoint.Empty
+            };
         }
 
         /// <summary>
@@ -490,14 +484,14 @@ namespace SIPSorcery.SIP
                     if (addressList.Any(x => x.AddressFamily == family))
                     {
                         var addressResult = addressList.First(x => x.AddressFamily == family);
-                        return new SIPEndPoint(uri.Protocol, addressResult, uriPort);
+                        return new SIPEndPoint(addressResult, uriPort, uri.Protocol);
                     }
                     else
                     {
                         // Didn't get a result for the preferred address family so just use the 
                         // first available result.
                         var addressResult = addressList.First();
-                        return new SIPEndPoint(uri.Protocol, addressResult, uriPort);
+                        return new SIPEndPoint(addressResult, uriPort, uri.Protocol);
                     }
                 }
             }

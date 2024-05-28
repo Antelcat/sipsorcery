@@ -18,7 +18,7 @@ using System.Linq;
 
 namespace SIPSorcery.Sys
 {
-    public class NetConvert
+    public static class NetConvert
     {
         public static UInt16 DoReverseEndian(UInt16 x)
         {

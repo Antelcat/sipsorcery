@@ -1727,10 +1727,10 @@ namespace SIPSorcery.Net
 
                 if (rtpSessionConfig.UseSdpCryptoNegotiation)
                 {
-                    var sdpType = RemoteDescription == null || RequireRenegotiation ? SdpType.offer : SdpType.answer;
+                    var sdpType = RemoteDescription == null || RequireRenegotiation ? SdpType.Offer : SdpType.Answer;
                     var srtpHandler = mediaStream.GetOrCreateSrtpHandler();
 
-                    if (sdpType == SdpType.offer)
+                    if (sdpType == SdpType.Offer)
                     {
                         if (srtpHandler.LocalSecurityDescription == null)
                         {

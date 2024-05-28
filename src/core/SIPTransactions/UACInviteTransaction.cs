@@ -116,8 +116,8 @@ namespace SIPSorcery.SIP
 
                 if (CDR != null)
                 {
-                    SIPEndPoint localEP = SIPEndPoint.TryParse(sipResponse.Header.ProxyReceivedOn) ?? localSIPEndPoint;
-                    SIPEndPoint remoteEP = SIPEndPoint.TryParse(sipResponse.Header.ProxyReceivedFrom) ?? remoteEndPoint;
+                    var localEP = SIPEndPoint.Parse(sipResponse.Header.ProxyReceivedOn) ?? localSIPEndPoint;
+                    var remoteEP = SIPEndPoint.Parse(sipResponse.Header.ProxyReceivedFrom) ?? remoteEndPoint;
                     CDR.Progress(sipResponse.Status, sipResponse.ReasonPhrase, localEP, remoteEP);
                 }
 
@@ -162,8 +162,8 @@ namespace SIPSorcery.SIP
 
                 if (CDR != null)
                 {
-                    SIPEndPoint localEP = SIPEndPoint.TryParse(sipResponse.Header.ProxyReceivedOn) ?? localSIPEndPoint;
-                    SIPEndPoint remoteEP = SIPEndPoint.TryParse(sipResponse.Header.ProxyReceivedFrom) ?? remoteEndPoint;
+                    SIPEndPoint localEP = SIPEndPoint.Parse(sipResponse.Header.ProxyReceivedOn) ?? localSIPEndPoint;
+                    SIPEndPoint remoteEP = SIPEndPoint.Parse(sipResponse.Header.ProxyReceivedFrom) ?? remoteEndPoint;
                     CDR.Answered(sipResponse.StatusCode, sipResponse.Status, sipResponse.ReasonPhrase, localEP, remoteEP);
                 }
 
@@ -211,7 +211,7 @@ namespace SIPSorcery.SIP
                 {
                     // Setting the Proxy-ReceivedOn header is how an upstream proxy will let an agent know it should 
                     // mangle the contact. 
-                    SIPEndPoint remoteUASSIPEndPoint = SIPEndPoint.ParseSIPEndPoint(ackResponse.Header.ProxyReceivedFrom);
+                    SIPEndPoint remoteUASSIPEndPoint = SIPEndPoint.Parse(ackResponse.Header.ProxyReceivedFrom);
                     requestURI.Host = remoteUASSIPEndPoint.GetIPEndPoint().ToString();
                 }
             }
