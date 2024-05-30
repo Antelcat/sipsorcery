@@ -293,37 +293,37 @@ namespace SIPSorcery.Net
             return false;
         }
 
-        public Certificate GetRemoteCertificate()
+        public Certificate? GetRemoteCertificate()
         {
             return connection.GetRemoteCertificate();
         }
 
-        protected byte[] GetMasterServerKey()
+        protected byte[]? GetMasterServerKey()
         {
             return connection.GetSrtpMasterServerKey();
         }
 
-        protected byte[] GetMasterServerSalt()
+        protected byte[]? GetMasterServerSalt()
         {
             return connection.GetSrtpMasterServerSalt();
         }
 
-        protected byte[] GetMasterClientKey()
+        protected byte[]? GetMasterClientKey()
         {
             return connection.GetSrtpMasterClientKey();
         }
 
-        protected byte[] GetMasterClientSalt()
+        protected byte[]? GetMasterClientSalt()
         {
             return connection.GetSrtpMasterClientSalt();
         }
 
-        protected SrtpPolicy GetSrtpPolicy()
+        protected SrtpPolicy? GetSrtpPolicy()
         {
             return connection.GetSrtpPolicy();
         }
 
-        protected SrtpPolicy GetSrtcpPolicy()
+        protected SrtpPolicy? GetSrtcpPolicy()
         {
             return connection.GetSrtcpPolicy();
         }

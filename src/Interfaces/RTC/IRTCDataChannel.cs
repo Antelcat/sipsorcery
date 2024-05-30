@@ -76,38 +76,38 @@ namespace SIPSorcery.Net
         /// object from other RTCDataChannel objects. Scripts are allowed to create multiple RTCDataChannel 
         /// objects with the same label. On getting, the attribute MUST return the value of the [[DataChannelLabel]] slot.
         /// </summary>
-        string label { get; }
+        string Label { get; }
 
         /// <summary>
         /// The ordered attribute returns true if the RTCDataChannel is ordered, and false if out of order delivery 
         /// is allowed. On getting, the attribute MUST return the value of the [[Ordered]] slot
         /// </summary>
-        bool ordered { get; }
+        bool Ordered { get; }
 
         /// <summary>
         /// he maxPacketLifeTime attribute returns the length of the time window (in milliseconds) during which 
         /// transmissions and retransmissions may occur in unreliable mode. On getting, the attribute MUST return the 
         /// value of the [[MaxPacketLifeTime]] slot.
         /// </summary>
-        ushort? maxPacketLifeTime { get; }
+        ushort? MaxPacketLifeTime { get; }
 
         /// <summary>
         /// The maxRetransmits attribute returns the maximum number of retransmissions that are attempted in unreliable mode. 
         /// On getting, the attribute MUST return the value of the [[MaxRetransmits]] slot.
         /// </summary>
-        ushort? maxRetransmits { get; }
+        ushort? MaxRetransmits { get; }
 
         /// <summary>
         /// The protocol attribute returns the name of the sub-protocol used with this RTCDataChannel. On getting, the 
         /// attribute MUST return the value of the [[DataChannelProtocol]] slot.
         /// </summary>
-        string protocol { get; }
+        string Protocol { get; }
 
         /// <summary>
         /// he negotiated attribute returns true if this RTCDataChannel was negotiated by the application, or false otherwise. 
         /// On getting, the attribute MUST return the value of the [[Negotiated]] slot.
         /// </summary>
-        bool negotiated { get; }
+        bool Negotiated { get; }
 
         /// <summary>
         /// The id attribute returns the ID for this RTCDataChannel. The value is initially null, which is what will be returned if 
@@ -116,13 +116,13 @@ namespace SIPSorcery.Net
         /// [RTCWEB-DATA-PROTOCOL]. After the ID is set to a non-null value, it will not change. On getting, the attribute MUST return 
         /// the value of the [[DataChannelId]] slot.
         /// </summary>
-        ushort? id { get; }
+        ushort? Id { get; }
 
         /// <summary>
         /// The readyState attribute represents the state of the RTCDataChannel object. On getting, the attribute MUST return the 
         /// value of the [[ReadyState]] slot.
         /// </summary>
-        RTCDataChannelState readyState { get; }
+        RTCDataChannelState ReadyState { get; }
 
         /// <summary>
         /// The bufferedAmount attribute MUST, on getting, return the value of the [[BufferedAmount]] slot. The attribute exposes the 
@@ -134,43 +134,43 @@ namespace SIPSorcery.Net
         /// channel closes. When the underlying data transport sends data from its queue, the user agent MUST queue a task that reduces 
         /// [[BufferedAmount]] with the number of bytes that was sent.
         /// </summary>
-        ulong bufferedAmount { get; }
+        ulong BufferedAmount { get; }
 
         /// <summary>
         /// The bufferedAmountLowThreshold attribute sets the threshold at which the bufferedAmount is considered to be low. When the 
         /// bufferedAmount decreases from above this threshold to equal or below it, the bufferedamountlow event fires. The 
         /// bufferedAmountLowThreshold is initially zero on each new RTCDataChannel, but the application may change its value at any time.
         /// </summary>
-        ulong bufferedAmountLowThreshold { get; set; }
+        ulong BufferedAmountLowThreshold { get; set; }
 
         /// <summary>
         /// The RTCDataChannel object's underlying data transport has been established (or re-established).
         /// </summary>
-        event Action onopen;
+        event Action OnOpen;
 
         //event Action onbufferedamountlow;
-        event Action<string> onerror;
+        event Action<string> OnError;
         //event Action onclosing;
-        event Action onclose;
+        event Action OnClose;
         void close();
 
         /// <summary>
         /// A message was successfully received.
         /// </summary>
-        event OnDataChannelMessageDelegate onmessage;
+        event OnDataChannelMessageDelegate OnMessage;
 
-        string binaryType { get; set; }
+        string BinaryType { get; set; }
         void send(string data);
         void send(byte[] data);
     };
 
     public class RTCDataChannelInit
     {
-        public bool? ordered { get; set; }
-        public ushort? maxPacketLifeTime { get; set; }
-        public ushort? maxRetransmits { get; set; }
-        public string protocol { get; set; }
-        public bool? negotiated { get; set; }
-        public ushort? id { get; set; }
+        public bool? Ordered { get; set; }
+        public ushort? MaxPacketLifeTime { get; set; }
+        public ushort? MaxRetransmits { get; set; }
+        public string? Protocol { get; set; }
+        public bool? Negotiated { get; set; }
+        public ushort? Id { get; set; }
     };
 }

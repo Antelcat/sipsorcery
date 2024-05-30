@@ -110,7 +110,7 @@ namespace SIPSorcery.Net
         /// candidate could be a hostname or IP address. This field will be set before the candidate
         /// is used.
         /// </summary>
-        public IPEndPoint DestinationEndPoint { get; private set; }
+        public IPEndPoint? DestinationEndPoint { get; private set; }
 
         private RTCIceCandidate()
         { }
@@ -316,7 +316,7 @@ namespace SIPSorcery.Net
         /// Sets the remote end point for a remote candidate.
         /// </summary>
         /// <param name="destinationEP">The resolved end point for the candidate.</param>
-        public void SetDestinationEndPoint(IPEndPoint destinationEP)
+        public void SetDestinationEndPoint(IPEndPoint? destinationEP)
         {
             DestinationEndPoint = destinationEP;
         }
@@ -399,7 +399,7 @@ namespace SIPSorcery.Net
         /// <param name="epPotocol">The protocol to check equivalence for.</param>
         /// <param name="ep">The IP end point to check equivalence for.</param>
         /// <returns>True if the candidate is deemed equivalent or false if not.</returns>
-        public bool IsEquivalentEndPoint(RTCIceProtocol epPotocol, IPEndPoint ep)
+        public bool IsEquivalentEndPoint(RTCIceProtocol epPotocol, IPEndPoint? ep)
         {
             if (protocol == epPotocol && DestinationEndPoint != null &&
                ep.Address.Equals(DestinationEndPoint.Address) && DestinationEndPoint.Port == ep.Port)

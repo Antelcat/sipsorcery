@@ -49,7 +49,7 @@ namespace SIPSorcery.Net
          * @param srtcpPolicy
          *            SRTCP policy
          */
-        public SrtpTransformEngine(byte[] masterKey, byte[] masterSalt, SrtpPolicy srtpPolicy, SrtpPolicy srtcpPolicy)
+        public SrtpTransformEngine(byte[]? masterKey, byte[]? masterSalt, SrtpPolicy? srtpPolicy, SrtpPolicy? srtcpPolicy)
         {
             defaultContext = new SrtpCryptoContext(0, 0, 0, masterKey, masterSalt, srtpPolicy);
             defaultContextControl = new SrtcpCryptoContext(0, masterKey, masterSalt, srtcpPolicy);

@@ -243,7 +243,7 @@ namespace SIPSorcery.net.RTP
             }
         }
 
-        public AudioStream(RtpSessionConfig config, int index) : base(config, index)
+        public AudioStream(RtpSessionConfig sessionConfig, int index) : base(sessionConfig, index)
         {
             MediaType = SDPMediaTypesEnum.audio;
         }

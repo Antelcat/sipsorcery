@@ -291,13 +291,13 @@ namespace SIPSorcery.Net
         /// The last remote end point an RTP packet was sent to or received from. Used for 
         /// reporting purposes only.
         /// </summary>
-        protected IPEndPoint LastRtpDestination { get; set; }
+        protected IPEndPoint? LastRtpDestination { get; set; }
 
         /// <summary>
         /// The last remote end point an RTCP packet was sent to or received from. Used for
         /// reporting purposes only.
         /// </summary>
-        internal IPEndPoint LastControlDestination { get; private set; }
+        internal IPEndPoint? LastControlDestination { get; private set; }
 
         /// <summary>
         /// The local port we are listening for RTP (and whatever else is multiplexed) packets on.
@@ -343,8 +343,8 @@ namespace SIPSorcery.Net
             get { return m_isClosed; }
         }
 
-        public event Action<int, IPEndPoint, byte[]> OnRTPDataReceived;
-        public event Action<int, IPEndPoint, byte[]> OnControlDataReceived;
+        public event Action<int, IPEndPoint?, byte[]> OnRTPDataReceived;
+        public event Action<int, IPEndPoint?, byte[]> OnControlDataReceived;
         public event Action<string> OnClosed;
 
         /// <summary>
@@ -462,7 +462,7 @@ namespace SIPSorcery.Net
         /// <param name="buffer">The data to send.</param>
         /// <returns>The result of initiating the send. This result does not reflect anything about
         /// whether the remote party received the packet or not.</returns>
-        public virtual SocketError Send(RTPChannelSocketsEnum sendOn, IPEndPoint dstEndPoint, byte[] buffer)
+        public virtual SocketError Send(RTPChannelSocketsEnum sendOn, IPEndPoint? dstEndPoint, byte[] buffer)
         {
             if (m_isClosed)
             {
@@ -569,7 +569,7 @@ namespace SIPSorcery.Net
         /// <param name="localPort">The local port it was received on.</param>
         /// <param name="remoteEndPoint">The remote end point of the sender.</param>
         /// <param name="packet">The raw packet received (note this may not be RTP if other protocols are being multiplexed).</param>
-        protected virtual void OnRTPPacketReceived(UdpReceiver receiver, int localPort, IPEndPoint remoteEndPoint, byte[] packet)
+        protected virtual void OnRTPPacketReceived(UdpReceiver receiver, int localPort, IPEndPoint? remoteEndPoint, byte[] packet)
         {
             if (packet?.Length > 0)
             {
@@ -585,7 +585,7 @@ namespace SIPSorcery.Net
         /// <param name="localPort">The local port it was received on.</param>
         /// <param name="remoteEndPoint">The remote end point of the sender.</param>
         /// <param name="packet">The raw packet received which should always be an RTCP packet.</param>
-        private void OnControlPacketReceived(UdpReceiver receiver, int localPort, IPEndPoint remoteEndPoint, byte[] packet)
+        private void OnControlPacketReceived(UdpReceiver receiver, int localPort, IPEndPoint? remoteEndPoint, byte[] packet)
         {
             LastControlDestination = remoteEndPoint;
             OnControlDataReceived?.Invoke(localPort, remoteEndPoint, packet);

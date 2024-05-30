@@ -274,7 +274,7 @@ namespace SIPSorcery.Net
             }
         }
 
-        internal void GotStunResponse(STUNMessage stunResponse, IPEndPoint remoteEndPoint)
+        internal void GotStunResponse(STUNMessage stunResponse, IPEndPoint? remoteEndPoint)
         {
             bool retry = false;
             var msgType = stunResponse.Header.MessageClass;

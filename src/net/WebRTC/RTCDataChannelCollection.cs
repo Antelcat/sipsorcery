@@ -6,19 +6,15 @@ using System.Linq;
 
 namespace SIPSorcery.Net
 {
-    class RTCDataChannelCollection : IReadOnlyCollection<RTCDataChannel>
+    internal class RTCDataChannelCollection(Func<bool> useEvenIds) : IReadOnlyCollection<RTCDataChannel>
     {
-        readonly ConcurrentBag<RTCDataChannel> pendingChannels = new ConcurrentBag<RTCDataChannel>();
-        readonly ConcurrentDictionary<ushort, RTCDataChannel> activeChannels = new ConcurrentDictionary<ushort, RTCDataChannel>();
-        readonly Func<bool> useEvenIds;
-        
-        readonly object idSyncObj = new object();
-        ushort lastChannelId = ushort.MaxValue - 1;
+        private readonly ConcurrentBag<RTCDataChannel> pendingChannels = [];
+        private readonly ConcurrentDictionary<ushort, RTCDataChannel> activeChannels = new();
+
+        private readonly object idSyncObj = new();
+        private ushort lastChannelId = ushort.MaxValue - 1;
 
         public int Count => pendingChannels.Count + activeChannels.Count;
-
-        public RTCDataChannelCollection(Func<bool> useEvenIds)
-            => this.useEvenIds = useEvenIds;
 
         public void AddPendingChannel(RTCDataChannel channel)
             => pendingChannels.Add(channel);
@@ -37,9 +33,9 @@ namespace SIPSorcery.Net
         
         public bool AddActiveChannel(RTCDataChannel channel)
         {
-            if (channel.id.HasValue)
+            if (channel.Id.HasValue)
             {
-                if (!activeChannels.TryAdd(channel.id.Value, channel))
+                if (!activeChannels.TryAdd(channel.Id.Value, channel))
                 {
                     return false;
                 }
@@ -48,29 +44,29 @@ namespace SIPSorcery.Net
             {
                 while (true)
                 {
-                    var id = GetNextChannelID();
+                    var id = GetNextChannelId();
                     if (activeChannels.TryAdd(id, channel))
                     {
-                        channel.id = id;
+                        channel.Id = id;
                         break;
                     }
                 }
             }
 
-            channel.onclose += OnClose;
-            channel.onerror += OnError;
+            channel.OnClose += OnClose;
+            channel.OnError += OnError;
             return true;
             
             void OnClose()
             {
-                channel.onclose -= OnClose;
-                channel.onerror -= OnError;
-                activeChannels.TryRemove(channel.id.Value, out _);
+                channel.OnClose -= OnClose;
+                channel.OnError -= OnError;
+                activeChannels.TryRemove(channel.Id.Value, out _);
             }
             void OnError(string error) => OnClose();
         }
         
-        ushort GetNextChannelID()
+        ushort GetNextChannelId()
         {
             lock (idSyncObj)
             {

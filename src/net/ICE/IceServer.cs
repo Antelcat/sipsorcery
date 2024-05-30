@@ -107,7 +107,7 @@ namespace SIPSorcery.Net
         /// The end point for this STUN or TURN server. Will be set asynchronously once
         /// any required DNS lookup completes.
         /// </summary>
-        internal IPEndPoint ServerEndPoint { get; set; }
+        internal IPEndPoint? ServerEndPoint { get; set; }
 
         /// <summary>
         /// The transaction ID to use in STUN requests. It is used to match responses
@@ -151,13 +151,13 @@ namespace SIPSorcery.Net
         /// If the initial Binding (for STUN) or Allocate (for TURN) connection check is successful 
         /// this will hold the resultant server reflexive transport address.
         /// </summary>
-        internal IPEndPoint ServerReflexiveEndPoint { get; set; }
+        internal IPEndPoint? ServerReflexiveEndPoint { get; set; }
 
         /// <summary>
         /// If the ICE server being checked is a TURN one and the Allocate request is successful this
         /// will hold the relay transport address.
         /// </summary>
-        internal IPEndPoint RelayEndPoint { get; set; }
+        internal IPEndPoint? RelayEndPoint { get; set; }
 
         /// <summary>
         /// If requests to the server need to be authenticated this is the nonce to set. 
@@ -269,7 +269,7 @@ namespace SIPSorcery.Net
         /// <param name="remoteEndPoint">The remote end point the STUN response was received from.</param>
         /// <returns>True if the STUN response resulted in new ICE candidates being available (which
         /// will be either a "server reflexive" or "relay" candidate.</returns>
-        internal bool GotStunResponse(STUNMessage stunResponse, IPEndPoint remoteEndPoint)
+        internal bool GotStunResponse(STUNMessage stunResponse, IPEndPoint? remoteEndPoint)
         {
             bool candidatesAvailable = false;
 

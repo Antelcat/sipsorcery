@@ -140,12 +140,12 @@ namespace SIPSorcery.Net
         /**
          * Master encryption key
          */
-        private byte[] masterKey;
+        private byte[]? masterKey;
 
         /**
          * Master salting key
          */
-        private byte[] masterSalt;
+        private byte[]? masterSalt;
 
         /**
          * Derived session encryption key
@@ -165,7 +165,7 @@ namespace SIPSorcery.Net
         /**
          * Encryption / Authentication policy for this session
          */
-        private SrtpPolicy policy;
+        private SrtpPolicy? policy;
 
         /**
          * The HMAC object we used to do packet authentication
@@ -259,8 +259,8 @@ namespace SIPSorcery.Net
          *            encryption algorithm, the authentication algorithm, etc
          */
 
-        public SrtpCryptoContext(long ssrcIn, int rocIn, long kdr, byte[] masterK,
-                byte[] masterS, SrtpPolicy policyIn)
+        public SrtpCryptoContext(long ssrcIn, int rocIn, long kdr, byte[]? masterK,
+                byte[]? masterS, SrtpPolicy? policyIn)
         {
             ssrcCtx = ssrcIn;
             mki = null;

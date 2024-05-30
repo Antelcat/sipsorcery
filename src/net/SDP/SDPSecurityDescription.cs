@@ -69,12 +69,12 @@ namespace SIPSorcery.Net
             private const string COLON = ":";
             private const string PIPE = "|";
             public const string KEY_METHOD = "inline";
-            private byte[] m_key = null;
+            private byte[]? m_key = null;
             //128 bit for AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, F8_128_HMAC_SHA1_80, AEAD_AES_128_GCM
             //192 bit for AES_192_CM_HMAC_SHA1_80, AES_192_CM_HMAC_SHA1_32
             //256 bit for AEAD_AES_256_GCM, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32 
             //
-            public byte[] Key
+            public byte[]? Key
             {
                 get
                 {
@@ -95,12 +95,12 @@ namespace SIPSorcery.Net
                     this.m_key = value;
                 }
             }
-            private byte[] m_salt = null;
+            private byte[]? m_salt = null;
             //112 bit for AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, F8_128_HMAC_SHA1_80
             //112 bit for AES_192_CM_HMAC_SHA1_80,AES_192_CM_HMAC_SHA1_32 , AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32 
             //96 bit for AEAD_AES_128_GCM
             //
-            public byte[] Salt
+            public byte[]? Salt
             {
                 get
                 {
@@ -245,7 +245,7 @@ namespace SIPSorcery.Net
                 this.Salt = Encoding.ASCII.GetBytes(salt);
             }
 
-            public KeyParameter(byte[] key, byte[] salt)
+            public KeyParameter(byte[]? key, byte[]? salt)
             {
                 this.Key = key;
                 this.Salt = salt;
@@ -292,7 +292,8 @@ namespace SIPSorcery.Net
                                     parseKeyInfo(keyParamString, sKeyInfo, out sMkiVal, out sMkiLen, out sLifeTime, out sBase64KeySalt);
                                     if (!string.IsNullOrWhiteSpace(sBase64KeySalt))
                                     {
-                                        byte[] bKey, bSalt;
+                                        byte[]? bKey;
+                                        byte[] bSalt;
                                         parseKeySaltBase64(cryptoSuite, sBase64KeySalt, out bKey, out bSalt);
 
                                         KeyParameter kp = new KeyParameter(bKey, bSalt);
@@ -326,7 +327,7 @@ namespace SIPSorcery.Net
                 throw new FormatException($"keyParam '{keyParamString}' is not recognized as a valid KEY_PARAM ");
             }
 
-            private static void parseKeySaltBase64(CryptoSuites cryptoSuite, string base64KeySalt, out byte[] key, out byte[] salt)
+            private static void parseKeySaltBase64(CryptoSuites cryptoSuite, string base64KeySalt, out byte[]? key, out byte[]? salt)
             {
                 byte[] keysalt = Convert.FromBase64String(base64KeySalt);
                 key = null;
@@ -420,7 +421,8 @@ namespace SIPSorcery.Net
                                     parseKeyInfo(keyParamString, sKeyInfo, out sMkiVal, out sMkiLen, out sLifeTime, out sBase64KeySalt);
                                     if (!string.IsNullOrWhiteSpace(sBase64KeySalt))
                                     {
-                                        byte[] bKey, bSalt;
+                                        byte[]? bKey;
+                                        byte[] bSalt;
                                         parseKeySaltBase64(cryptoSuite, sBase64KeySalt, out bKey, out bSalt);
 
                                         keyParam = new KeyParameter(bKey, bSalt);

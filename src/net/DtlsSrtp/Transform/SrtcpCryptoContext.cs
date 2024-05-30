@@ -86,10 +86,10 @@ namespace SIPSorcery.Net
         private long replayWindow;
 
         /** Master encryption key */
-        private byte[] masterKey;
+        private byte[]? masterKey;
 
         /** Master salting key */
-        private byte[] masterSalt;
+        private byte[]? masterSalt;
 
         /** Derived session encryption key */
         private byte[] encKey;
@@ -101,7 +101,7 @@ namespace SIPSorcery.Net
         private byte[] saltKey;
 
         /** Encryption / Authentication policy for this session */
-        private SrtpPolicy policy;
+        private SrtpPolicy? policy;
 
         /**
          * The HMAC object we used to do packet authentication
@@ -163,7 +163,7 @@ namespace SIPSorcery.Net
          *            SRTP policy for this SRTP cryptographic context, defined the
          *            encryption algorithm, the authentication algorithm, etc
          */
-        public SrtcpCryptoContext(long ssrcIn, byte[] masterK, byte[] masterS, SrtpPolicy policyIn)
+        public SrtcpCryptoContext(long ssrcIn, byte[]? masterK, byte[]? masterS, SrtpPolicy? policyIn)
         {
             ssrcCtx = ssrcIn;
             mki = null;

@@ -101,7 +101,7 @@ namespace SIPSorcery.Net
             return attrDescrStr;
         }
 
-        public IPEndPoint GetIPEndPoint()
+        public IPEndPoint? GetIPEndPoint()
         {
             if (Address != null)
             {

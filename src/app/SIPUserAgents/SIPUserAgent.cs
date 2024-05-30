@@ -702,7 +702,7 @@ namespace SIPSorcery.SIP.App
                     SDP remoteSdp = SDP.ParseSDPDescription(sipRequest.Body);
                     var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.Offer, remoteSdp);
 
-                    if (setRemoteResult != SetDescriptionResultEnum.OK)
+                    if (setRemoteResult != SetDescriptionResultEnum.Ok)
                     {
                         logger.LogWarning($"Error setting remote description from INVITE {setRemoteResult}.");
                         uas.Reject(SIPResponseStatusCodesEnum.NotAcceptable, setRemoteResult.ToString());
@@ -748,7 +748,7 @@ namespace SIPSorcery.SIP.App
                         var remoteSDP = SDP.ParseSDPDescription(m_sipDialogue.RemoteSDP);
                         var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.Offer, remoteSDP);
 
-                        if (setRemoteResult != SetDescriptionResultEnum.OK)
+                        if (setRemoteResult != SetDescriptionResultEnum.Ok)
                         {
                             // Failed to set the remote SDP from the ACK request. Only option is to hangup.
                             logger.LogWarning($"Error setting remote description from ACK {setRemoteResult}.");
@@ -1012,7 +1012,7 @@ namespace SIPSorcery.SIP.App
                     {
                         var setRemoteResult = MediaSession.SetRemoteDescription(SdpType.Offer, offer);
 
-                        if (setRemoteResult != SetDescriptionResultEnum.OK)
+                        if (setRemoteResult != SetDescriptionResultEnum.Ok)
                         {
                             logger.LogWarning($"Unable to set remote description from reINVITE request {setRemoteResult}");
 
@@ -1555,7 +1555,7 @@ namespace SIPSorcery.SIP.App
                     var setDescriptionResult = MediaSession.SetRemoteDescription(SdpType.Answer, SDP.ParseSDPDescription(sipResponse.Body));
                     logger.LogDebug($"Set remote description for early media result {setDescriptionResult}.");
 
-                    if (setDescriptionResult == SetDescriptionResultEnum.OK)
+                    if (setDescriptionResult == SetDescriptionResultEnum.Ok)
                     {
                         await MediaSession.Start()
                                           .ConfigureAwait(false);
@@ -1629,7 +1629,7 @@ namespace SIPSorcery.SIP.App
                 {
                     var setDescriptionResult = MediaSession.SetRemoteDescription(SdpType.Answer, SDP.ParseSDPDescription(sipResponse.Body));
 
-                    if (setDescriptionResult == SetDescriptionResultEnum.OK)
+                    if (setDescriptionResult == SetDescriptionResultEnum.Ok)
                     {
                         try
                         {

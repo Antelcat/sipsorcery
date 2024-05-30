@@ -343,12 +343,12 @@ namespace SIPSorcery.Net
     /// </remarks>
     public enum RTCSignalingState
     {
-        stable,
-        have_local_offer,
-        have_remote_offer,
-        have_local_pranswer,
-        have_remote_pranswer,
-        closed
+        Stable,
+        HaveLocalOffer,
+        HaveRemoteOffer,
+        HaveLocalPranswer,
+        HaveRemotePranswer,
+        Closed
     }
 
     /// <summary>
@@ -364,44 +364,44 @@ namespace SIPSorcery.Net
     /// </remarks>
     public enum RTCPeerConnectionState
     {
-        closed,
-        failed,
-        disconnected,
-        @new,
-        connecting,
-        connected
+        Closed,
+        Failed,
+        Disconnected,
+        New,
+        Connecting,
+        Connected
     }
 
     public interface IRTCPeerConnection
     {
         //IRTCPeerConnection(RTCConfiguration configuration = null);
-        RTCSessionDescriptionInit createOffer(RTCOfferOptions options = null);
-        RTCSessionDescriptionInit createAnswer(RTCAnswerOptions options = null);
-        Task setLocalDescription(RTCSessionDescriptionInit description);
-        RTCSessionDescription? localDescription { get; }
-        RTCSessionDescription? currentLocalDescription { get; }
-        RTCSessionDescription? pendingLocalDescription { get; }
-        SetDescriptionResultEnum setRemoteDescription(RTCSessionDescriptionInit description);
-        RTCSessionDescription? remoteDescription { get; }
-        RTCSessionDescription? currentRemoteDescription { get; }
-        RTCSessionDescription? pendingRemoteDescription { get; }
-        void addIceCandidate(RTCIceCandidateInit candidate = null);
-        RTCSignalingState signalingState { get; }
-        RTCIceGatheringState iceGatheringState { get; }
-        RTCIceConnectionState iceConnectionState { get; }
-        RTCPeerConnectionState connectionState { get; }
-        bool canTrickleIceCandidates { get; }
-        void restartIce();
-        RTCConfiguration getConfiguration();
-        void setConfiguration(RTCConfiguration configuration = null);
-        void close();
-        event Action onnegotiationneeded;
-        event Action<RTCIceCandidate> onicecandidate;
-        event Action<RTCIceCandidate, string> onicecandidateerror;
-        event Action onsignalingstatechange;
-        event Action<RTCIceConnectionState> oniceconnectionstatechange;
-        event Action<RTCIceGatheringState> onicegatheringstatechange;
-        event Action<RTCPeerConnectionState> onconnectionstatechange;
+        RTCSessionDescriptionInit CreateOffer(RTCOfferOptions? options = null);
+        RTCSessionDescriptionInit CreateAnswer(RTCAnswerOptions? options = null);
+        Task SetLocalDescription(RTCSessionDescriptionInit description);
+        RTCSessionDescription? LocalDescription { get; }
+        RTCSessionDescription? CurrentLocalDescription { get; }
+        RTCSessionDescription? PendingLocalDescription { get; }
+        SetDescriptionResultEnum SetRemoteDescription(RTCSessionDescriptionInit description);
+        RTCSessionDescription? RemoteDescription { get; }
+        RTCSessionDescription? CurrentRemoteDescription { get; }
+        RTCSessionDescription? PendingRemoteDescription { get; }
+        void AddIceCandidate(RTCIceCandidateInit? candidate = null);
+        RTCSignalingState SignalingState { get; }
+        RTCIceGatheringState IceGatheringState { get; }
+        RTCIceConnectionState IceConnectionState { get; }
+        RTCPeerConnectionState ConnectionState { get; }
+        bool CanTrickleIceCandidates { get; }
+        void RestartIce();
+        RTCConfiguration GetConfiguration();
+        void SetConfiguration(RTCConfiguration? configuration = null);
+        void Close();
+        event Action OnNegotiationNeeded;
+        event Action<RTCIceCandidate> OnIceCandidate;
+        event Action<RTCIceCandidate, string> OnIceCandidateError;
+        event Action OnSignalingStateChange;
+        event Action<RTCIceConnectionState> OnIceConnectionStateChange;
+        event Action<RTCIceGatheringState> OnIceGatheringStateChange;
+        event Action<RTCPeerConnectionState> OnConnectionStateChange;
 
         // TODO: Extensions for the RTCMediaAPI
         // https://www.w3.org/TR/webrtc/#rtcpeerconnection-interface-extensions.
@@ -425,7 +425,7 @@ namespace SIPSorcery.Net
     /// </remarks>
     public interface IRTCRtpSender
     {
-        MediaStreamTrack track { get; }
+        MediaStreamTrack Track { get; }
         //readonly attribute RTCDtlsTransport? transport;
         //static RTCRtpCapabilities? getCapabilities(DOMString kind);
         //Task setParameters(RTCRtpSendParameters parameters);
@@ -443,7 +443,7 @@ namespace SIPSorcery.Net
     /// </remarks>
     public interface IRTCRtpReceiver
     {
-        MediaStreamTrack track { get; }
+        MediaStreamTrack Track { get; }
         //readonly attribute RTCDtlsTransport? transport;
         //static RTCRtpCapabilities? getCapabilities(DOMString kind);
         //RTCRtpReceiveParameters getParameters();

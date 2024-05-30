@@ -557,7 +557,7 @@ namespace SIPSorcery.Net
         ///  - IPEndPoint: The remote end point the STUN message was received from.
         ///  - bool: True if the message was received via a TURN server relay.
         /// </summary>
-        public event Action<STUNMessage, IPEndPoint, bool> OnStunMessageReceived;
+        public event Action<STUNMessage, IPEndPoint?, bool> OnStunMessageReceived;
 
         /// <summary>
         /// This event gets fired when a STUN message is sent by this channel.
@@ -567,9 +567,9 @@ namespace SIPSorcery.Net
         ///  - IPEndPoint: The remote end point the STUN message was sent to.
         ///  - bool: True if the message was sent via a TURN server relay.
         /// </summary>
-        public event Action<STUNMessage, IPEndPoint, bool> OnStunMessageSent;
+        public event Action<STUNMessage, IPEndPoint?, bool> OnStunMessageSent;
 
-        public new event Action<int, IPEndPoint, byte[]> OnRTPDataReceived;
+        public new event Action<int, IPEndPoint?, byte[]> OnRTPDataReceived;
 
         /// <summary>
         /// An optional callback function to resolve remote ICE candidates with MDNS hostnames.
@@ -1777,12 +1777,12 @@ namespace SIPSorcery.Net
             {
                 if (candidatePair.LocalCandidate.type == RTCIceCandidateType.relay)
                 {
-                    IPEndPoint relayServerEP = candidatePair.LocalCandidate.IceServer.ServerEndPoint;
+                    IPEndPoint? relayServerEP = candidatePair.LocalCandidate.IceServer.ServerEndPoint;
                     logger.LogDebug($"ICE RTP channel sending connectivity check for {candidatePair.LocalCandidate.ToShortString()}->{candidatePair.RemoteCandidate.ToShortString()} from {base.RTPLocalEndPoint} to relay at {relayServerEP} (use candidate {setUseCandidate}).");
                 }
                 else
                 {
-                    IPEndPoint remoteEndPoint = candidatePair.RemoteCandidate.DestinationEndPoint;
+                    IPEndPoint? remoteEndPoint = candidatePair.RemoteCandidate.DestinationEndPoint;
                     logger.LogDebug($"ICE RTP channel sending connectivity check for {candidatePair.LocalCandidate.ToShortString()}->{candidatePair.RemoteCandidate.ToShortString()} from {base.RTPLocalEndPoint} to {remoteEndPoint} (use candidate {setUseCandidate}).");
                 }
                 SendSTUNBindingRequest(candidatePair, setUseCandidate);
@@ -1820,13 +1820,13 @@ namespace SIPSorcery.Net
 
             if (candidatePair.LocalCandidate.type == RTCIceCandidateType.relay)
             {
-                IPEndPoint relayServerEP = candidatePair.LocalCandidate.IceServer.ServerEndPoint;
+                IPEndPoint? relayServerEP = candidatePair.LocalCandidate.IceServer.ServerEndPoint;
                 var protocol = candidatePair.LocalCandidate.IceServer.Protocol;
                 SendRelay(protocol, candidatePair.RemoteCandidate.DestinationEndPoint, stunReqBytes, relayServerEP, candidatePair.LocalCandidate.IceServer);
             }
             else
             {
-                IPEndPoint remoteEndPoint = candidatePair.RemoteCandidate.DestinationEndPoint;
+                IPEndPoint? remoteEndPoint = candidatePair.RemoteCandidate.DestinationEndPoint;
                 var sendResult = base.Send(RTPChannelSocketsEnum.RTP, remoteEndPoint, stunReqBytes);
 
                 if (sendResult != SocketError.Success)
@@ -1910,7 +1910,7 @@ namespace SIPSorcery.Net
         /// </remarks>
         /// <param name="stunMessage">The STUN message received.</param>
         /// <param name="remoteEndPoint">The remote end point the STUN packet was received from.</param>
-        public async Task ProcessStunMessage(STUNMessage stunMessage, IPEndPoint remoteEndPoint, bool wasRelayed)
+        public async Task ProcessStunMessage(STUNMessage stunMessage, IPEndPoint? remoteEndPoint, bool wasRelayed)
         {
             if (_closed)
             {
@@ -2076,7 +2076,7 @@ namespace SIPSorcery.Net
         /// <param name="remoteEndPoint">The end point the request was received from.</param>
         /// <param name="wasRelayed">True of the request was relayed via the TURN server in use
         /// by this ICE channel (i.e. the ICE server that this channel is acting as the client with).</param>
-        private void GotStunBindingRequest(STUNMessage bindingRequest, IPEndPoint remoteEndPoint, bool wasRelayed)
+        private void GotStunBindingRequest(STUNMessage bindingRequest, IPEndPoint? remoteEndPoint, bool wasRelayed)
         {
             if (_closed)
             {
@@ -2395,7 +2395,7 @@ namespace SIPSorcery.Net
         /// <param name="iceServer">The ICE server to send the request to.</param>
         /// <param name="peerEndPoint">The peer end point to request the channel bind for.</param>
         /// <returns>The result from the socket send (not the response code from the TURN server).</returns>
-        private SocketError SendTurnCreatePermissionsRequest(string transactionID, IceServer iceServer, IPEndPoint peerEndPoint)
+        private SocketError SendTurnCreatePermissionsRequest(string transactionID, IceServer iceServer, IPEndPoint? peerEndPoint)
         {
             STUNMessage permissionsRequest = new STUNMessage(STUNMessageTypesEnum.CreatePermission);
             permissionsRequest.Header.TransactionId = Encoding.ASCII.GetBytes(transactionID);
@@ -2431,7 +2431,7 @@ namespace SIPSorcery.Net
 
         protected virtual SocketError SendOverTCP(IceServer iceServer, byte[] buffer)
         {
-            IPEndPoint dstEndPoint = iceServer?.ServerEndPoint;
+            IPEndPoint? dstEndPoint = iceServer?.ServerEndPoint;
             if (IsClosed)
             {
                 return SocketError.Disconnecting;
@@ -2564,7 +2564,7 @@ namespace SIPSorcery.Net
         /// <param name="localPort">The local port it was received on.</param>
         /// <param name="remoteEndPoint">The remote end point of the sender.</param>
         /// <param name="packet">The raw packet received (note this may not be RTP if other protocols are being multiplexed).</param>
-        protected override void OnRTPPacketReceived(UdpReceiver receiver, int localPort, IPEndPoint remoteEndPoint, byte[] packet)
+        protected override void OnRTPPacketReceived(UdpReceiver receiver, int localPort, IPEndPoint? remoteEndPoint, byte[] packet)
         {
             if (packet?.Length > 0)
             {
@@ -2605,7 +2605,7 @@ namespace SIPSorcery.Net
         /// <param name="buffer">The data to send to the peer.</param>
         /// <param name="relayEndPoint">The TURN server end point to send the relayed request to.</param>
         /// <returns></returns>
-        private SocketError SendRelay(ProtocolType protocol, IPEndPoint dstEndPoint, byte[] buffer, IPEndPoint relayEndPoint, IceServer iceServer)
+        private SocketError SendRelay(ProtocolType protocol, IPEndPoint? dstEndPoint, byte[] buffer, IPEndPoint? relayEndPoint, IceServer iceServer)
         {
             STUNMessage sendReq = new STUNMessage(STUNMessageTypesEnum.SendIndication);
             sendReq.AddXORPeerAddressAttribute(dstEndPoint.Address, dstEndPoint.Port);
@@ -2682,7 +2682,7 @@ namespace SIPSorcery.Net
         /// <param name="buffer">The data to send.</param>
         /// <returns>The result of initiating the send. This result does not reflect anything about
         /// whether the remote party received the packet or not.</returns>
-        public override SocketError Send(RTPChannelSocketsEnum sendOn, IPEndPoint dstEndPoint, byte[] buffer)
+        public override SocketError Send(RTPChannelSocketsEnum sendOn, IPEndPoint? dstEndPoint, byte[] buffer)
         {
             if (NominatedEntry != null && NominatedEntry.LocalCandidate.type == RTCIceCandidateType.relay &&
                 NominatedEntry.LocalCandidate.IceServer != null &&

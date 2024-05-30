@@ -27,7 +27,7 @@ namespace SIPSorcery.Net
     {
         private static ILogger logger = Log.Logger;
 
-        private VideoCodecsEnum _codec;
+        private VideoCodecsEnum codec;
         private int _maxFrameSize;
         private byte[] _currVideoFrame;
         private int _currVideoFramePosn = 0;
@@ -40,23 +40,23 @@ namespace SIPSorcery.Net
                 throw new NotSupportedException("The RTP video framer currently only understands H264 and VP8 encoded frames.");
             }
 
-            _codec = codec;
+            this.codec = codec;
             _maxFrameSize = maxFrameSize;
             _currVideoFrame = new byte[maxFrameSize];
             
-            if (_codec == VideoCodecsEnum.H264)
+            if (this.codec == VideoCodecsEnum.H264)
             {
                 _h264Depacketiser = new H264Depacketiser();
             }
         }
 
-        public byte[] GotRtpPacket(RTPPacket rtpPacket)
+        public byte[]? GotRtpPacket(RTPPacket rtpPacket)
         {
             var payload = rtpPacket.Payload;
 
             var hdr = rtpPacket.Header;
 
-            if (_codec == VideoCodecsEnum.VP8)
+            if (codec == VideoCodecsEnum.VP8)
             {
                 //logger.LogDebug($"rtp VP8 video, seqnum {hdr.SequenceNumber}, ts {hdr.Timestamp}, marker {hdr.MarkerBit}, payload {payload.Length}.");
 
@@ -71,7 +71,7 @@ namespace SIPSorcery.Net
                 // as per https://tools.ietf.org/html/rfc7741#section-4.4.
                 if (_currVideoFramePosn > 0 || (payload[0] & 0x10) > 0)
                 {
-                    RtpVP8Header vp8Header = RtpVP8Header.GetVP8Header(payload);
+                    var vp8Header = RtpVP8Header.GetVP8Header(payload);
 
                     Buffer.BlockCopy(payload, vp8Header.Length, _currVideoFrame, _currVideoFramePosn, payload.Length - vp8Header.Length);
                     _currVideoFramePosn += payload.Length - vp8Header.Length;
@@ -91,7 +91,7 @@ namespace SIPSorcery.Net
                     //logger.LogWarning($"rtp video, seqnum {hdr.SequenceNumber}, ts {hdr.Timestamp}, marker {hdr.MarkerBit}, payload {payload.Length}.");
                 }
             }
-            else if (_codec == VideoCodecsEnum.H264)
+            else if (codec == VideoCodecsEnum.H264)
             {
                 //logger.LogDebug($"rtp H264 video, seqnum {hdr.SequenceNumber}, ts {hdr.Timestamp}, marker {hdr.MarkerBit}, payload {payload.Length}.");
 

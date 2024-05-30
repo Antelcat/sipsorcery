@@ -83,7 +83,7 @@ namespace SIPSorcery.Net
         /// <summary>
         /// The current state of the SCTP transport.
         /// </summary>
-        public RTCSctpTransportState state { get; private set; }
+        public RTCSctpTransportState State { get; private set; }
 
         /// <summary>
         /// The maximum size of data that can be passed to RTCDataChannel's send() method.
@@ -91,7 +91,7 @@ namespace SIPSorcery.Net
         /// <remarks>
         /// See https://www.w3.org/TR/webrtc/#sctp-transport-update-mms.
         /// </remarks>
-        public uint maxMessageSize => SCTP_DEFAULT_MAX_MESSAGE_SIZE;
+        public uint MaxMessageSize => SCTP_DEFAULT_MAX_MESSAGE_SIZE;
 
         /// <summary>
         /// The maximum number of data channel's that can be used simultaneously (where each
@@ -99,7 +99,7 @@ namespace SIPSorcery.Net
         /// </summary>
         public readonly ushort maxChannels;
 
-        public RTCPeerSctpAssociation RTCSctpAssociation { get; private set; }
+        public RTCPeerSctpAssociation RTCSctpAssociation { get; }
 
         /// <summary>
         /// Event for notifications about changes to the SCTP transport state.
@@ -131,9 +131,9 @@ namespace SIPSorcery.Net
         /// <param name="port">The updated source port.</param>
         public void UpdateSourcePort(ushort port)
         {
-            if (state != RTCSctpTransportState.Closed)
+            if (State != RTCSctpTransportState.Closed)
             {
-                logger.LogWarning($"SCTP source port cannot be updated when the transport is in state {state}.");
+                logger.LogWarning($"SCTP source port cannot be updated when the transport is in state {State}.");
             }
             else
             {
@@ -147,9 +147,9 @@ namespace SIPSorcery.Net
         /// <param name="port">The updated destination port.</param>
         public void UpdateDestinationPort(ushort port)
         {
-            if (state != RTCSctpTransportState.Closed)
+            if (State != RTCSctpTransportState.Closed)
             {
-                logger.LogWarning($"SCTP destination port cannot be updated when the transport is in state {state}.");
+                logger.LogWarning($"SCTP destination port cannot be updated when the transport is in state {State}.");
             }
             else
             {
@@ -190,7 +190,7 @@ namespace SIPSorcery.Net
         /// </summary>
         public void Close()
         {
-            if (state == RTCSctpTransportState.Connected)
+            if (State == RTCSctpTransportState.Connected)
             {
                 RTCSctpAssociation?.Shutdown();
             }
@@ -220,8 +220,8 @@ namespace SIPSorcery.Net
         /// <param name="newState">The new state to set.</param>
         private void SetState(RTCSctpTransportState newState)
         {
-            state = newState;
-            OnStateChanged?.Invoke(state);
+            State = newState;
+            OnStateChanged?.Invoke(State);
         }
 
         /// <summary>
@@ -365,10 +365,10 @@ namespace SIPSorcery.Net
         /// <param name="length">The number of bytes to send.</param>
         public override void Send(string associationID, byte[] buffer, int offset, int length)
         {
-            if (length > maxMessageSize)
+            if (length > MaxMessageSize)
             {
                 throw new ApplicationException($"RTCSctpTransport was requested to send data of length {length} " +
-                    $" that exceeded the maximum allowed message size of {maxMessageSize}.");
+                    $" that exceeded the maximum allowed message size of {MaxMessageSize}.");
             }
 
             if (!_isClosed)
