@@ -16,44 +16,54 @@
 // BSD 3-Clause "New" or "Revised" License, see included LICENSE.md file.
 //----------------------------------------------------------------------------
 
+using System;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace SIPSorcery.Sys
+namespace SIPSorcery.Sys;
+
+internal static class Log
 {
-    internal class Log
+    private const string LOG_CATEGORY = "sipsorcery";
+
+    static Log()
     {
-        private const string LOG_CATEGORY = "sipsorcery";
+        LogFactory.Instance.OnFactorySet += Reset;
+        logger = new DebugLogger();
+    }
 
-        static Log()
+    private static ILogger? logger;
+        
+    internal static ILogger Logger
+    {
+        get => logger ??= LogFactory.CreateLogger(LOG_CATEGORY);
+        set => logger = value;
+    }
+
+    /// <summary>
+    /// Intended to be called if the application wide logging configuration changes. Will force
+    /// the singleton logger to be re-created.
+    /// </summary>
+    internal static void Reset()
+    {
+        logger = null;
+    }
+
+    private class DebugLogger : ILogger
+    {
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            SIPSorcery.LogFactory.Instance.OnFactorySet += Reset;
+            Debug.WriteLine($"[{LOG_CATEGORY}] {formatter(state, exception)}");
         }
 
-        private static ILogger _logger;
-        internal static ILogger Logger
+        public bool IsEnabled(LogLevel logLevel)
         {
-            get
-            {
-                if (_logger == null)
-                {
-                    _logger = SIPSorcery.LogFactory.CreateLogger(LOG_CATEGORY);
-                }
-
-                return _logger;
-            }
-            set
-            {
-                _logger = value;
-            }
+            return true;
         }
 
-        /// <summary>
-        /// Intended to be called if the application wide logging configuration changes. Will force
-        /// the singleton logger to be re-created.
-        /// </summary>
-        internal static void Reset()
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
-            _logger = null;
+            return null;
         }
     }
 }

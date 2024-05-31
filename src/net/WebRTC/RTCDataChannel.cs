@@ -16,245 +16,261 @@
 
 using System;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SIPSorcery.Sys;
 
-namespace SIPSorcery.Net
+namespace SIPSorcery.Net;
+
+/// <summary>
+/// The assignments for SCTP payload protocol IDs used with
+/// WebRTC data channels.
+/// </summary>
+/// <remarks>
+/// See https://tools.ietf.org/html/rfc8831#section-8
+/// </remarks>
+public enum DataChannelPayloadProtocols : uint
 {
     /// <summary>
-    /// The assignments for SCTP payload protocol IDs used with
-    /// WebRTC data channels.
+    /// Data Channel Establishment Protocol (DCEP).
     /// </summary>
-    /// <remarks>
-    /// See https://tools.ietf.org/html/rfc8831#section-8
-    /// </remarks>
-    public enum DataChannelPayloadProtocols : uint
-    {
-        WebRTC_DCEP = 50, // Data Channel Establishment Protocol (DCEP).
-        WebRTC_String = 51,
-        [Obsolete]
-        WebRTC_Binary_Partial = 52, // Deprecated.
-        WebRTC_Binary = 53,
-        [Obsolete]
-        WebRTC_String_Partial = 54, // Deprecated.
-        WebRTC_String_Empty = 56,
-        WebRTC_Binary_Empty = 57
-    }
+    DCEP = 50,
+    String = 51,
+    [Obsolete]
+    BinaryPartial = 52, // Deprecated.
+    Binary = 53,
+    [Obsolete]
+    StringPartial = 54, // Deprecated.
+    StringEmpty = 56,
+    BinaryEmpty = 57
+}
+
+/// <summary>
+/// A WebRTC data channel is generic transport service
+/// that allows peers to exchange generic data in a peer
+/// to peer manner.
+/// </summary>
+public class RTCDataChannel : IRTCDataChannel
+{
+    private readonly static ILogger Logger = Log.Logger;
+    private readonly RTCSctpTransport transport1;
 
     /// <summary>
     /// A WebRTC data channel is generic transport service
     /// that allows peers to exchange generic data in a peer
     /// to peer manner.
     /// </summary>
-    public class RTCDataChannel(RTCSctpTransport transport, RTCDataChannelInit? init = null) : IRTCDataChannel
+    public RTCDataChannel(RTCSctpTransport transport, RTCDataChannelInit? init = null)
     {
-        private static ILogger logger = Log.Logger;
+        transport1 = transport;
+        Ordered = init?.Ordered ?? true;
+        MaxPacketLifeTime = init?.MaxPacketLifeTime;
+        MaxRetransmits = init?.MaxRetransmits;
+        Protocol = init?.Protocol ?? string.Empty;
+        Negotiated = init?.Negotiated ?? false;
+        Id = init?.Id;
+    }
 
-        public string Label { get; init; } = "<None>";
+    public string Label { get; init; } = "<None>";
 
-        public bool Ordered { get; } = init?.Ordered ?? true;
+    public bool Ordered { get; }
 
-        public ushort? MaxPacketLifeTime { get; } = init?.MaxPacketLifeTime;
+    public ushort? MaxPacketLifeTime { get; }
 
-        public ushort? MaxRetransmits { get; } = init?.MaxRetransmits;
+    public ushort? MaxRetransmits { get; }
 
-        public string Protocol { get; } = init?.Protocol ?? string.Empty;
+    public string Protocol { get; }
 
-        public bool Negotiated { get; } = init?.Negotiated ?? false;
+    public bool Negotiated { get; }
 
-        public ushort? Id { get; internal set; } = init?.Id;
+    public ushort? Id { get; internal set; }
 
-        public RTCDataChannelState ReadyState { get; internal set; } = RTCDataChannelState.connecting;
+    public RTCDataChannelState ReadyState { get; internal set; } = RTCDataChannelState.connecting;
 
-        public ulong BufferedAmount => transport.RTCSctpAssociation.SendBufferedAmount;
+    public ulong BufferedAmount => transport1.RTCSctpAssociation.SendBufferedAmount;
 
-        public ulong BufferedAmountLowThreshold { get; set; }
+    public ulong BufferedAmountLowThreshold { get; set; }
 
-        public string BinaryType { get; set; } = "arraybuffer";
+    public string BinaryType { get; set; } = "arraybuffer";
 
-        public uint MaxMessageSize => transport.MaxMessageSize;
+    public uint MaxMessageSize => transport1.MaxMessageSize;
 
-        public string? Error { get; private set; }
+    public string? Error { get; private set; }
 
-        public bool IsOpened { get; internal set; }
+    public bool IsOpened { get; internal set; }
 
-        private readonly RTCSctpTransport? transport = transport;
+    public event Action? OnOpen;
 
-        public event Action? OnOpen;
+    //public event Action onbufferedamountlow;
+    public event Action<string>? OnError;
 
-        //public event Action onbufferedamountlow;
-        public event Action<string>? OnError;
+    //public event Action onclosing;
+    public event Action? OnClose;
+    public event OnDataChannelMessageDelegate? OnMessage;
 
-        //public event Action onclosing;
-        public event Action? OnClose;
-        public event OnDataChannelMessageDelegate? OnMessage;
+    internal void GotAck()
+    {
+        Logger.LogDebug($"Data channel for label {Label} now open.");
+        IsOpened = true;
+        ReadyState = RTCDataChannelState.open;
+        OnOpen?.Invoke();
+    }
 
-        internal void GotAck()
+    /// <summary>
+    /// Sets the error message is there was a problem creating the data channel.
+    /// </summary>
+    internal void SetError(string error)
+    {
+        Error = error;
+        OnError?.Invoke(error);
+    }
+
+    public void Close()
+    {
+        IsOpened = false;
+        ReadyState = RTCDataChannelState.closed;
+        Logger.LogDebug($"Data channel with id {Id} has been closed");
+        OnClose?.Invoke();
+    }
+
+    /// <summary>
+    /// Sends a string data payload on the data channel.
+    /// </summary>
+    /// <param name="message">The string message to send.</param>
+    public void Send(string message)
+    {
+        if (message != null && Encoding.UTF8.GetByteCount(message) > transport1.MaxMessageSize)
         {
-            logger.LogDebug($"Data channel for label {Label} now open.");
-            IsOpened = true;
-            ReadyState = RTCDataChannelState.open;
-            OnOpen?.Invoke();
+            throw new ApplicationException(
+                $"Data channel {Label} was requested to send data of length {Encoding.UTF8.GetByteCount(message)} " +
+                $" that exceeded the maximum allowed message size of {transport1.MaxMessageSize}.");
         }
-
-        /// <summary>
-        /// Sets the error message is there was a problem creating the data channel.
-        /// </summary>
-        internal void SetError(string error)
-        {
-            Error = error;
-            OnError?.Invoke(error);
-        }
-
-        public void close()
-        {
-            IsOpened = false;
-            ReadyState = RTCDataChannelState.closed;
-            logger.LogDebug($"Data channel with id {Id} has been closed");
-            OnClose?.Invoke();
-        }
-
-        /// <summary>
-        /// Sends a string data payload on the data channel.
-        /// </summary>
-        /// <param name="message">The string message to send.</param>
-        public void send(string message)
-        {
-            if (message != null && Encoding.UTF8.GetByteCount(message) > transport.MaxMessageSize)
-            {
-                throw new ApplicationException(
-                    $"Data channel {Label} was requested to send data of length {Encoding.UTF8.GetByteCount(message)} " +
-                    $" that exceeded the maximum allowed message size of {transport.MaxMessageSize}.");
-            }
             
-            if (transport.State != RTCSctpTransportState.Connected)
-            {
-                logger.LogWarning($"WebRTC data channel send failed due to SCTP transport in state {transport.State}.");
-            }
-            else
-            {
-                lock (this)
-                {
-                    if (string.IsNullOrEmpty(message))
-                    {
-                        transport.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
-                            (uint)DataChannelPayloadProtocols.WebRTC_String_Empty,
-                            [0x00]);
-                    }
-                    else
-                    {
-                        transport.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
-                            (uint)DataChannelPayloadProtocols.WebRTC_String,
-                            Encoding.UTF8.GetBytes(message));
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Sends a binary data payload on the data channel.
-        /// </summary>
-        /// <param name="data">The data to send.</param>
-        public void send(byte[] data)
+        if (transport1.State != RTCSctpTransportState.Connected)
         {
-            if (data.Length > transport.MaxMessageSize)
-            {
-                throw new ApplicationException(
-                    $"Data channel {Label} was requested to send data of length {data.Length} " +
-                    $" that exceeded the maximum allowed message size of {transport.MaxMessageSize}.");
-            }
-
-            if (transport.State != RTCSctpTransportState.Connected)
-            {
-                logger.LogWarning($"WebRTC data channel send failed due to SCTP transport in state {transport.State}.");
-            }
-            else
-            {
-                lock (this)
-                {
-                    if (data.Length == 0)
-                    {
-                        transport.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
-                            (uint)DataChannelPayloadProtocols.WebRTC_Binary_Empty,
-                            [0x00]);
-                    }
-                    else
-                    {
-                        transport.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
-                            (uint)DataChannelPayloadProtocols.WebRTC_Binary,
-                            data);
-                    }
-                }
-            }
+            Logger.LogWarning($"WebRTC data channel send failed due to SCTP transport in state {transport1.State}.");
         }
-
-        /// <summary>
-        /// Sends an OPEN Data Channel Establishment Protocol (DCEP) message
-        /// to open a data channel on the remote peer for send/receive.
-        /// </summary>
-        internal void SendDcepOpen()
-        {
-            byte type = (byte)DataChannelTypes.DATA_CHANNEL_RELIABLE;
-            if (!Ordered)
-            {
-                type += (byte)DataChannelTypes.DATA_CHANNEL_RELIABLE_UNORDERED;
-            }
-            if (MaxPacketLifeTime > 0)
-            {
-                type += (byte)DataChannelTypes.DATA_CHANNEL_PARTIAL_RELIABLE_TIMED;
-            }
-            else if (MaxRetransmits > 0)
-            {
-                type += (byte)DataChannelTypes.DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT;
-            }
-
-            var dcepOpen = new DataChannelOpenMessage
-            {
-                MessageType = (byte)DataChannelMessageTypes.OPEN,
-                ChannelType = type,
-                Label = Label,
-                Protocol = Protocol,
-            };
-
-            lock (this)
-            {
-                transport.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
-                    (uint)DataChannelPayloadProtocols.WebRTC_DCEP,
-                    dcepOpen.GetBytes());
-            }
-        }
-
-        /// <summary>
-        /// Sends an ACK response for a Data Channel Establishment Protocol (DCEP)
-        /// control message.
-        /// </summary>
-        internal void SendDcepAck()
+        else
         {
             lock (this)
             {
-                transport.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
-                    (uint)DataChannelPayloadProtocols.WebRTC_DCEP,
-                    [(byte)DataChannelMessageTypes.ACK]);
+                if (string.IsNullOrEmpty(message))
+                {
+                    transport1.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
+                        (uint)DataChannelPayloadProtocols.StringEmpty,
+                        [0x00]);
+                }
+                else
+                {
+                    transport1.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
+                        (uint)DataChannelPayloadProtocols.String,
+                        Encoding.UTF8.GetBytes(message));
+                }
             }
         }
+    }
 
-        /// <summary>
-        /// Event handler for an SCTP data chunk being received for this data channel.
-        /// </summary>
-        internal void GotData(ushort streamID, ushort streamSeqNum, uint ppID, byte[] data)
+    /// <summary>
+    /// Sends a binary data payload on the data channel.
+    /// </summary>
+    /// <param name="data">The data to send.</param>
+    public void Send(byte[] data)
+    {
+        if (data.Length > transport1.MaxMessageSize)
         {
-            //logger.LogTrace($"WebRTC data channel GotData stream ID {streamID}, stream seqnum {streamSeqNum}, ppid {ppID}, label {label}.");
-
-            // If the ppID is not recognised default to binary.
-            var payloadType = DataChannelPayloadProtocols.WebRTC_Binary;
-
-            if (Enum.IsDefined(typeof(DataChannelPayloadProtocols), ppID))
-            {
-                payloadType = (DataChannelPayloadProtocols)ppID;
-            }
-
-            OnMessage?.Invoke(this, payloadType, data);
+            throw new ApplicationException(
+                $"Data channel {Label} was requested to send data of length {data.Length} " +
+                $" that exceeded the maximum allowed message size of {transport1.MaxMessageSize}.");
         }
+
+        if (transport1.State != RTCSctpTransportState.Connected)
+        {
+            Logger.LogWarning($"WebRTC data channel send failed due to SCTP transport in state {transport1.State}.");
+        }
+        else
+        {
+            lock (this)
+            {
+                if (data.Length == 0)
+                {
+                    transport1.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
+                        (uint)DataChannelPayloadProtocols.BinaryEmpty,
+                        [0x00]);
+                }
+                else
+                {
+                    transport1.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
+                        (uint)DataChannelPayloadProtocols.Binary,
+                        data);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sends an OPEN Data Channel Establishment Protocol (DCEP) message
+    /// to open a data channel on the remote peer for send/receive.
+    /// </summary>
+    internal void SendDcepOpen()
+    {
+        var type = (byte)DataChannelTypes.DATA_CHANNEL_RELIABLE;
+        if (!Ordered)
+        {
+            type += (byte)DataChannelTypes.DATA_CHANNEL_RELIABLE_UNORDERED;
+        }
+        if (MaxPacketLifeTime > 0)
+        {
+            type += (byte)DataChannelTypes.DATA_CHANNEL_PARTIAL_RELIABLE_TIMED;
+        }
+        else if (MaxRetransmits > 0)
+        {
+            type += (byte)DataChannelTypes.DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT;
+        }
+
+        var dcepOpen = new DataChannelOpenMessage
+        {
+            MessageType = (byte)DataChannelMessageTypes.OPEN,
+            ChannelType = type,
+            Label = Label,
+            Protocol = Protocol,
+        };
+
+        lock (this)
+        {
+            transport1.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
+                (uint)DataChannelPayloadProtocols.DCEP,
+                dcepOpen.GetBytes());
+        }
+    }
+
+    /// <summary>
+    /// Sends an ACK response for a Data Channel Establishment Protocol (DCEP)
+    /// control message.
+    /// </summary>
+    internal void SendDcepAck()
+    {
+        lock (this)
+        {
+            transport1.RTCSctpAssociation.SendData(Id.GetValueOrDefault(),
+                (uint)DataChannelPayloadProtocols.DCEP,
+                [(byte)DataChannelMessageTypes.ACK]);
+        }
+    }
+
+    /// <summary>
+    /// Event handler for an SCTP data chunk being received for this data channel.
+    /// </summary>
+    internal void GotData(ushort streamID, ushort streamSeqNum, uint ppID, byte[] data)
+    {
+        //logger.LogTrace($"WebRTC data channel GotData stream ID {streamID}, stream seqnum {streamSeqNum}, ppid {ppID}, label {label}.");
+
+        // If the ppID is not recognised default to binary.
+        var payloadType = DataChannelPayloadProtocols.Binary;
+
+        if (Enum.IsDefined(typeof(DataChannelPayloadProtocols), ppID))
+        {
+            payloadType = (DataChannelPayloadProtocols)ppID;
+        }
+
+        OnMessage?.Invoke(this, payloadType, data);
     }
 }

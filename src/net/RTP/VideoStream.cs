@@ -28,7 +28,7 @@ namespace SIPSorcery.Net;
 
 public class VideoStream : MediaStream
 {
-    protected static ILogger logger = Log.Logger;
+    protected readonly static ILogger Logger = Log.Logger;
 
     protected RtpVideoFramer? RtpVideoFramer;
 
@@ -58,14 +58,11 @@ public class VideoStream : MediaStream
     /// <summary>
     /// Indicates whether this session is using video.
     /// </summary>
-    public bool HasVideo
-    {
-        get
-        {
-            return LocalTrack != null && LocalTrack.StreamStatus != MediaStreamStatusEnum.Inactive
-                                      && RemoteTrack != null && RemoteTrack.StreamStatus != MediaStreamStatusEnum.Inactive;
-        }
-    }
+    public bool HasVideo =>
+        LocalTrack != null &&
+        LocalTrack.StreamStatus != MediaStreamStatusEnum.Inactive &&
+        RemoteTrack != null &&
+        RemoteTrack.StreamStatus != MediaStreamStatusEnum.Inactive;
 
     /// <summary>
     /// Indicates the maximum frame size that can be reconstructed from RTP packets during the depacketisation
@@ -73,50 +70,9 @@ public class VideoStream : MediaStream
     /// </summary>
     public int MaxReconstructedVideoFrameSize { get; set; } = 1048576;
 
-
     #endregion PROPERTIES
 
     #region SEND PACKET
-
-    /// <summary>
-    /// Helper method to send a low quality JPEG image over RTP. This method supports a very abbreviated version of RFC 2435 "RTP Payload Format for JPEG-compressed Video".
-    /// It's intended as a quick convenient way to send something like a test pattern image over an RTSP connection. More than likely it won't be suitable when a high
-    /// quality image is required since the header used in this method does not support quantization tables.
-    /// </summary>
-    /// <param name="duration">The duration in timestamp units of the payload (e.g. 3000 for 30fps).</param>
-    /// <param name="jpegBytes">The raw encoded bytes of the JPEG image to transmit.</param>
-    /// <param name="jpegQuality">The encoder quality of the JPEG image.</param>
-    /// <param name="jpegWidth">The width of the JPEG image.</param>
-    /// <param name="jpegHeight">The height of the JPEG image.</param>
-    public void SendJpegFrame(uint duration, int payloadTypeID, byte[] jpegBytes, int jpegQuality, int jpegWidth, int jpegHeight)
-    {
-        if (CheckIfCanSendRtpRaw())
-        {
-            try
-            {
-                for (int index = 0; index * RTPSession.RTP_MAX_PAYLOAD < jpegBytes.Length; index++)
-                {
-                    uint offset = Convert.ToUInt32(index * RTPSession.RTP_MAX_PAYLOAD);
-                    int payloadLength = ((index + 1) * RTPSession.RTP_MAX_PAYLOAD < jpegBytes.Length) ? RTPSession.RTP_MAX_PAYLOAD : jpegBytes.Length - index * RTPSession.RTP_MAX_PAYLOAD;
-                    byte[] jpegHeader = RtpVideoFramer.CreateLowQualityRtpJpegHeader(offset, jpegQuality, jpegWidth, jpegHeight);
-
-                    List<byte> packetPayload = new List<byte>();
-                    packetPayload.AddRange(jpegHeader);
-                    packetPayload.AddRange(jpegBytes.Skip(index * RTPSession.RTP_MAX_PAYLOAD).Take(payloadLength));
-
-                    int markerBit = ((index + 1) * RTPSession.RTP_MAX_PAYLOAD < jpegBytes.Length) ? 0 : 1;
-
-                    SendRtpRaw(packetPayload.ToArray(), LocalTrack.Timestamp, markerBit, payloadTypeID, true);
-                }
-
-                LocalTrack.Timestamp += duration;
-            }
-            catch (SocketException sockExcp)
-            {
-                logger.LogError("SocketException SendJpegFrame. " + sockExcp.Message);
-            }
-        }
-    }
 
     /// <summary>
     /// Sends a H264 frame, represented by an Access Unit, to the remote party.
@@ -162,7 +118,7 @@ public class VideoStream : MediaStream
         {
             // Send as Single-Time Aggregation Packet (STAP-A).
             byte[] payload = new byte[nal.Length];
-            int markerBit = isLastNal ? 1 : 0;   // There is only ever one packet in a STAP-A.
+            int markerBit = isLastNal ? 1 : 0; // There is only ever one packet in a STAP-A.
             Buffer.BlockCopy(nal, 0, payload, 0, nal.Length);
 
             SendRtpRaw(payload, LocalTrack.Timestamp, markerBit, payloadTypeID, true);
@@ -177,7 +133,9 @@ public class VideoStream : MediaStream
             for (var index = 0; index * RTPSession.RTP_MAX_PAYLOAD < nal.Length; index++)
             {
                 var offset = index * RTPSession.RTP_MAX_PAYLOAD;
-                var payloadLength = ((index + 1) * RTPSession.RTP_MAX_PAYLOAD < nal.Length) ? RTPSession.RTP_MAX_PAYLOAD : nal.Length - index * RTPSession.RTP_MAX_PAYLOAD;
+                var payloadLength = ((index + 1) * RTPSession.RTP_MAX_PAYLOAD < nal.Length)
+                    ? RTPSession.RTP_MAX_PAYLOAD
+                    : nal.Length - index * RTPSession.RTP_MAX_PAYLOAD;
 
                 var isFirstPacket = index == 0;
                 var isFinalPacket = (index + 1) * RTPSession.RTP_MAX_PAYLOAD >= nal.Length;
@@ -216,14 +174,14 @@ public class VideoStream : MediaStream
                 for (var index = 0; index * RTPSession.RTP_MAX_PAYLOAD < buffer.Length; index++)
                 {
                     var offset = index * RTPSession.RTP_MAX_PAYLOAD;
-                    var payloadLength = (offset + RTPSession.RTP_MAX_PAYLOAD < buffer.Length) ? RTPSession.RTP_MAX_PAYLOAD : buffer.Length - offset;
+                    var payloadLength = offset + RTPSession.RTP_MAX_PAYLOAD < buffer.Length ? RTPSession.RTP_MAX_PAYLOAD : buffer.Length - offset;
 
                     byte[] vp8HeaderBytes = index == 0 ? [0x10] : [0x00];
                     var payload = new byte[payloadLength + vp8HeaderBytes.Length];
                     Buffer.BlockCopy(vp8HeaderBytes, 0, payload, 0, vp8HeaderBytes.Length);
                     Buffer.BlockCopy(buffer, offset, payload, vp8HeaderBytes.Length, payloadLength);
 
-                    var markerBit = ((offset + payloadLength) >= buffer.Length) ? 1 : 0; // Set marker bit for the last packet in the frame.
+                    var markerBit = offset + payloadLength >= buffer.Length ? 1 : 0; // Set marker bit for the last packet in the frame.
 
                     SendRtpRaw(payload, LocalTrack.Timestamp, markerBit, payloadTypeID, true);
                     //logger.LogDebug($"send VP8 {videoChannel.RTPLocalEndPoint}->{dstEndPoint} timestamp {videoTrack.Timestamp}, sample length {buffer.Length}.");
@@ -233,7 +191,7 @@ public class VideoStream : MediaStream
             }
             catch (SocketException e)
             {
-                logger.LogError("SocketException SendVp8Frame. " + e.Message);
+                Logger.LogError("SocketException SendVp8Frame. " + e.Message);
             }
         }
     }
@@ -247,7 +205,7 @@ public class VideoStream : MediaStream
     public void SendVideo(uint durationRtpUnits, byte[] sample)
     {
         var videoSendingFormat = GetSendingFormat();
-        int payloadID = Convert.ToInt32(videoSendingFormat.ID);
+        var payloadID = Convert.ToInt32(videoSendingFormat.ID);
 
         switch (videoSendingFormat.Name())
         {
@@ -286,7 +244,7 @@ public class VideoStream : MediaStream
             if (format.ToVideoFormat().Codec == VideoCodecsEnum.VP8 ||
                 format.ToVideoFormat().Codec == VideoCodecsEnum.H264)
             {
-                logger.LogDebug($"Video depacketisation codec set to {format.ToVideoFormat().Codec} for SSRC {packet.Header.SyncSource}.");
+                Logger.LogDebug($"Video depacketisation codec set to {format.ToVideoFormat().Codec} for SSRC {packet.Header.SyncSource}.");
 
                 RtpVideoFramer = new RtpVideoFramer(format.ToVideoFormat().Codec, MaxReconstructedVideoFrameSize);
 
@@ -298,7 +256,7 @@ public class VideoStream : MediaStream
             }
             else
             {
-                logger.LogWarning($"Video depacketisation logic for codec {format.Name()} has not been implemented, PR's welcome!");
+                Logger.LogWarning($"Video depacketisation logic for codec {format.Name()} has not been implemented, PR's welcome!");
             }
         }
     }

@@ -287,7 +287,7 @@ public class SctpDataReceiver
                 {
                     // This is a data chunk fragment.
                     fragmentedChunks.Add(dataChunk.TSN, dataChunk);
-                    (var begin, var end) = GetChunkBeginAndEnd(fragmentedChunks, dataChunk.TSN);
+                    var (begin, end) = GetChunkBeginAndEnd(fragmentedChunks, dataChunk.TSN);
 
                     if (begin != null && end != null)
                     {

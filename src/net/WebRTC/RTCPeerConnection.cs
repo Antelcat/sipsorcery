@@ -45,6 +45,7 @@ using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Tls;
 using SIPSorcery.Interfaces;
+using SIPSorcery.net;
 using SIPSorcery.net.RTP;
 using SIPSorcery.SIP.App;
 using SIPSorcery.Sys;
@@ -332,13 +333,11 @@ namespace SIPSorcery.Net
         /// </summary>
         /// <param name="configuration">Optional.</param>
         public RTCPeerConnection(RTCConfiguration? configuration = null, int bindPort = 0, PortRange? portRange = null, bool videoAsPrimary = false) :
-            base(true, true, true, configuration?.X_BindAddress, bindPort, portRange)
+            base(true, true, true, true, configuration?.X_BindAddress, bindPort, portRange)
         {
             dataChannels = new RTCDataChannelCollection(useEvenIds: () => dtlsHandle.IsClient);
 
-            if (this.configuration != null &&
-                this.configuration.iceTransportPolicy == RTCIceTransportPolicy.relay &&
-                this.configuration.iceServers?.Count == 0)
+            if (this.configuration is { iceTransportPolicy: RTCIceTransportPolicy.relay, iceServers.Count: 0 })
             {
                 throw new ApplicationException("RTCPeerConnection must have at least one ICE server specified for a relay only transport policy.");
             }
@@ -830,7 +829,7 @@ namespace SIPSorcery.Net
                 {
                     foreach (var dc in DataChannels)
                     {
-                        dc?.close();
+                        dc?.Close();
                     }
                 }
 
@@ -862,9 +861,9 @@ namespace SIPSorcery.Net
         /// </remarks>
         /// <param name="options">Optional. If supplied the options will be sued to apply additional
         /// controls over the generated offer SDP.</param>
-        public RTCSessionDescriptionInit CreateOffer(RTCOfferOptions options = null)
+        public RTCSessionDescriptionInit CreateOffer(RTCOfferOptions? options = null)
         {
-            List<MediaStream> mediaStreamList = GetMediaStreams();
+            var mediaStreamList = GetMediaStreams();
             //Revert to DefaultStreamStatus
             foreach (var mediaStream in mediaStreamList)
             {
@@ -874,7 +873,7 @@ namespace SIPSorcery.Net
                 }
             }
 
-            bool excludeIceCandidates = options != null && options.X_ExcludeIceCandidates;
+            bool excludeIceCandidates = options is { X_ExcludeIceCandidates: true };
             var offerSdp = createBaseSdp(mediaStreamList, excludeIceCandidates);
 
             foreach (var mediaStream in offerSdp.Media)

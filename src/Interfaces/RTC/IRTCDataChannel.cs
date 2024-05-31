@@ -152,7 +152,7 @@ namespace SIPSorcery.Net
         event Action<string> OnError;
         //event Action onclosing;
         event Action OnClose;
-        void close();
+        void Close();
 
         /// <summary>
         /// A message was successfully received.
@@ -160,8 +160,8 @@ namespace SIPSorcery.Net
         event OnDataChannelMessageDelegate OnMessage;
 
         string BinaryType { get; set; }
-        void send(string data);
-        void send(byte[] data);
+        void Send(string data);
+        void Send(byte[] data);
     };
 
     public class RTCDataChannelInit

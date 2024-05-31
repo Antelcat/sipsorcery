@@ -89,7 +89,7 @@ public class RTCPeerSctpAssociation : SctpAssociation
     {
         switch (dataFrame)
         {
-            case var frame when frame.PPID == (uint)DataChannelPayloadProtocols.WebRTC_DCEP:
+            case { PPID: (uint)DataChannelPayloadProtocols.DCEP } frame:
                 switch (frame.UserData[0])
                 {
                     case (byte)DataChannelMessageTypes.ACK:
@@ -101,7 +101,7 @@ public class RTCPeerSctpAssociation : SctpAssociation
                         Logger.LogDebug($"DCEP OPEN channel type {dcepOpen.ChannelType}, priority {dcepOpen.Priority}, " +
                                         $"reliability {dcepOpen.Reliability}, label {dcepOpen.Label}, protocol {dcepOpen.Protocol}.");
 
-                        DataChannelTypes channelType = DataChannelTypes.DATA_CHANNEL_RELIABLE;
+                        var channelType = DataChannelTypes.DATA_CHANNEL_RELIABLE;
                         if(Enum.IsDefined(typeof(DataChannelTypes), dcepOpen.ChannelType))
                         {
                             channelType = (DataChannelTypes)dcepOpen.ChannelType;

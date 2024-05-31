@@ -164,8 +164,8 @@ public class RTPSession : IMediaSession, IDisposable
     public const int DEFAULT_DTMF_EVENT_PAYLOAD_ID = 101;
     public const string RTP_MEDIA_PROFILE = "RTP/AVP";
     public const string RTP_SECUREMEDIA_PROFILE = "RTP/SAVP";
-    protected const int SDP_SESSIONID_LENGTH = 10;             // The length of the pseudo-random string to use for the session ID.
-    public const int DTMF_EVENT_DURATION = 1200;            // Default duration for a DTMF event.
+    protected const int SDP_SESSIONID_LENGTH = 10; // The length of the pseudo-random string to use for the session ID.
+    public const int DTMF_EVENT_DURATION = 1200; // Default duration for a DTMF event.
     public const int DTMF_EVENT_PAYLOAD_ID = 101;
 
     /// <summary>
@@ -180,9 +180,10 @@ public class RTPSession : IMediaSession, IDisposable
     protected RtpSessionConfig rtpSessionConfig;
 
     private bool acceptRtpFromAny;
-    private string sdpSessionId;           // Need to maintain the same SDP session ID for all offers and answers.
-    private int sdpAnnouncementVersion;       // The SDP version needs to increase whenever the local SDP is modified (see https://tools.ietf.org/html/rfc6337#section-5.2.5).
-    internal int rtpChannelsCount;            // Need to know the number of RTP Channels
+    private string sdpSessionId; // Need to maintain the same SDP session ID for all offers and answers.
+    private int
+        sdpAnnouncementVersion; // The SDP version needs to increase whenever the local SDP is modified (see https://tools.ietf.org/html/rfc6337#section-5.2.5).
+    internal int rtpChannelsCount; // Need to know the number of RTP Channels
 
     // The stream used for the underlying RTP session to create a single RTP channel that will
     // be used to multiplex all required media streams. (see addSingleTrack())
@@ -329,8 +330,8 @@ public class RTPSession : IMediaSession, IDisposable
     /// </summary>
     public int MaxReconstructedVideoFrameSize
     {
-        get => VideoStream.MaxReconstructedVideoFrameSize; 
-        set => VideoStream.MaxReconstructedVideoFrameSize = value;  // TODO
+        get => VideoStream.MaxReconstructedVideoFrameSize;
+        set => VideoStream.MaxReconstructedVideoFrameSize = value; // TODO
     }
 
     /// <summary>
@@ -439,7 +440,7 @@ public class RTPSession : IMediaSession, IDisposable
     ///  - The media type the packet contains, will be audio or video,
     ///  - The full RTP packet.
     /// </summary>
-    public event Action<IPEndPoint, SDPMediaTypesEnum, RTPPacket>? OnRtpPacketReceived;
+    public event Action<IPEndPoint?, SDPMediaTypesEnum, RTPPacket>? OnRtpPacketReceived;
 
     /// <summary>
     /// Gets fired when an RTP packet is received from a remote party (using its index).
@@ -449,12 +450,12 @@ public class RTPSession : IMediaSession, IDisposable
     ///  - The media type the packet contains, will be audio or video,
     ///  - The full RTP packet.
     /// </summary>
-    public event Action<int, IPEndPoint, SDPMediaTypesEnum, RTPPacket>? OnRtpPacketReceivedByIndex;
+    public event Action<int, IPEndPoint?, SDPMediaTypesEnum, RTPPacket>? OnRtpPacketReceivedByIndex;
 
     /// <summary>
     /// Gets fired when an RTP event is detected on the remote call party's RTP stream (on the primary one).
     /// </summary>
-    public event Action<IPEndPoint, RTPEvent, RTPHeader>? OnRtpEvent;
+    public event Action<IPEndPoint?, RTPEvent, RTPHeader>? OnRtpEvent;
 
     /// <summary>
     /// Gets fired when an RTP event is detected on the remote call party's RTP stream (using its index).
@@ -539,7 +540,14 @@ public class RTPSession : IMediaSession, IDisposable
     /// <param name="bindPort">Optional. If specified a single attempt will be made to bind the RTP socket
     /// on this port. It's recommended to leave this parameter as the default of 0 to let the Operating
     /// System select the port number.</param>
-    public RTPSession(bool isMediaMultiplexed, bool isRtcpMultiplexed, bool isSecure, bool acceptRtpFromAny, IPAddress? bindAddress = null, int bindPort = 0, PortRange? portRange = null)
+    public RTPSession(
+        bool isMediaMultiplexed,
+        bool isRtcpMultiplexed,
+        bool isSecure,
+        bool acceptRtpFromAny,
+        IPAddress? bindAddress = null,
+        int bindPort = 0,
+        PortRange? portRange = null)
         : this(new RtpSessionConfig
             {
                 IsMediaMultiplexed = isMediaMultiplexed,
@@ -702,7 +710,7 @@ public class RTPSession : IMediaSession, IDisposable
         OnRtpEventByIndex?.Invoke(index, ipEndPoint, rtpEvent, rtpHeader);
     }
 
-    private void RaisedOnRtpPacketReceived(int index, IPEndPoint ipEndPoint, SDPMediaTypesEnum media, RTPPacket rtpPacket)
+    private void RaisedOnRtpPacketReceived(int index, IPEndPoint? ipEndPoint, SDPMediaTypesEnum media, RTPPacket rtpPacket)
     {
         if (index == 0)
         {
@@ -764,7 +772,7 @@ public class RTPSession : IMediaSession, IDisposable
             Logger.LogWarning("No local media tracks available for create offer.");
             return null;
         }
-            
+
         var mediaStreams = GetMediaStreams();
         // Revert to DefaultStreamStatus
         foreach (var mediaStream in mediaStreams)
@@ -833,7 +841,8 @@ public class RTPSession : IMediaSession, IDisposable
             if (connectionAddress == null)
             {
                 // No specific connection address supplied. Lookup the local address to connect to the offer address.
-                var offerConnectionAddress = (offer.Connection?.ConnectionAddress != null) ? IPAddress.Parse(offer.Connection.ConnectionAddress) : null;
+                var offerConnectionAddress =
+                    (offer.Connection?.ConnectionAddress != null) ? IPAddress.Parse(offer.Connection.ConnectionAddress) : null;
 
                 if (offerConnectionAddress == null || offerConnectionAddress == IPAddress.Any || offerConnectionAddress == IPAddress.IPv6Any)
                 {
@@ -936,7 +945,8 @@ public class RTPSession : IMediaSession, IDisposable
             int currentVideoStreamCount = 0;
             MediaStream currentMediaStream;
 
-            foreach (var announcement in sessionDescription.Media.Where(x => x.Media == SDPMediaTypesEnum.audio || x.Media == SDPMediaTypesEnum.video))
+            foreach (var announcement in
+                     sessionDescription.Media.Where(x => x.Media == SDPMediaTypesEnum.audio || x.Media == SDPMediaTypesEnum.video))
             {
                 if (announcement.Media == SDPMediaTypesEnum.audio)
                 {
@@ -955,8 +965,15 @@ public class RTPSession : IMediaSession, IDisposable
                     }
                 }
 
-                MediaStreamStatusEnum mediaStreamStatus = announcement.MediaStreamStatus.HasValue ? announcement.MediaStreamStatus.Value : MediaStreamStatusEnum.SendRecv;
-                var remoteTrack = new MediaStreamTrack(announcement.Media, true, announcement.MediaFormats.Values.ToList(), mediaStreamStatus, announcement.SsrcAttributes, announcement.HeaderExtensions);
+                MediaStreamStatusEnum mediaStreamStatus = announcement.MediaStreamStatus.HasValue
+                    ? announcement.MediaStreamStatus.Value
+                    : MediaStreamStatusEnum.SendRecv;
+                var remoteTrack = new MediaStreamTrack(announcement.Media,
+                    true,
+                    announcement.MediaFormats.Values.ToList(),
+                    mediaStreamStatus,
+                    announcement.SsrcAttributes,
+                    announcement.HeaderExtensions);
 
                 currentMediaStream.RemoteTrack = remoteTrack;
 
@@ -983,7 +1000,10 @@ public class RTPSession : IMediaSession, IDisposable
 
                             if (srtpHandler.IsNegotiationComplete)
                             {
-                                currentMediaStream.SetSecurityContext(srtpHandler.ProtectRTP, srtpHandler.UnprotectRTP, srtpHandler.ProtectRTCP, srtpHandler.UnprotectRTCP);
+                                currentMediaStream.SetSecurityContext(srtpHandler.ProtectRTP,
+                                    srtpHandler.UnprotectRTP,
+                                    srtpHandler.ProtectRTCP,
+                                    srtpHandler.UnprotectRTCP);
                             }
                         }
                     }
@@ -999,7 +1019,10 @@ public class RTPSession : IMediaSession, IDisposable
                 if (currentMediaStream.LocalTrack == null)
                 {
                     capabilities = remoteTrack.Capabilities;
-                    var inactiveLocalTrack = new MediaStreamTrack(currentMediaStream.MediaType, false, remoteTrack.Capabilities, MediaStreamStatusEnum.Inactive);
+                    var inactiveLocalTrack = new MediaStreamTrack(currentMediaStream.MediaType,
+                        false,
+                        remoteTrack.Capabilities,
+                        MediaStreamStatusEnum.Inactive);
                     currentMediaStream.LocalTrack = inactiveLocalTrack;
                 }
                 else
@@ -1007,7 +1030,8 @@ public class RTPSession : IMediaSession, IDisposable
                     // As proved by Azure implementation, we need to send based on capabilities of remote track. Azure return SDP with only one possible Codec (H264 107)
                     // but we receive frames based on our LocalRemoteTracks, so its possiblet o receive a frame with ID 122, for exemple, even when remote annoucement only have 107
                     // Thats why we changed line below to keep local track capabilities untouched as we can always do it during send/receive moment
-                    capabilities = SDPAudioVideoMediaFormat.GetCompatibleFormats(currentMediaStream.RemoteTrack?.Capabilities, currentMediaStream.LocalTrack?.Capabilities);
+                    capabilities = SDPAudioVideoMediaFormat.GetCompatibleFormats(currentMediaStream.RemoteTrack?.Capabilities,
+                        currentMediaStream.LocalTrack?.Capabilities);
                     //Keep same order of LocalTrack priority to prevent incorrect sending format
                     SDPAudioVideoMediaFormat.SortMediaCapability(capabilities, currentMediaStream.LocalTrack?.Capabilities);
 
@@ -1017,7 +1041,9 @@ public class RTPSession : IMediaSession, IDisposable
                     if (currentMediaStream.MediaType == SDPMediaTypesEnum.audio)
                     {
                         // Check whether RTP events can be supported and adjust our parameters to match the remote party if we can.
-                        SDPAudioVideoMediaFormat commonEventFormat = SDPAudioVideoMediaFormat.GetCommonRtpEventFormat(announcement.MediaFormats.Values.ToList(), currentMediaStream.LocalTrack.Capabilities);
+                        SDPAudioVideoMediaFormat commonEventFormat =
+                            SDPAudioVideoMediaFormat.GetCommonRtpEventFormat(announcement.MediaFormats.Values.ToList(),
+                                currentMediaStream.LocalTrack.Capabilities);
                         if (!commonEventFormat.IsEmpty())
                         {
                             currentMediaStream.RemoteRtpEventPayloadID = commonEventFormat.ID;
@@ -1027,13 +1053,18 @@ public class RTPSession : IMediaSession, IDisposable
                     IPEndPoint? remoteRtpEP = GetAnnouncementRTPDestination(announcement, connectionAddress);
                     SetLocalTrackStreamStatus(currentMediaStream.LocalTrack, remoteTrack.StreamStatus, remoteRtpEP);
                     IPEndPoint? remoteRtcpEP = null;
-                    if (remoteTrack.StreamStatus != MediaStreamStatusEnum.Inactive && currentMediaStream.LocalTrack.StreamStatus != MediaStreamStatusEnum.Inactive)
+                    if (remoteTrack.StreamStatus != MediaStreamStatusEnum.Inactive &&
+                        currentMediaStream.LocalTrack.StreamStatus != MediaStreamStatusEnum.Inactive)
                     {
                         remoteRtcpEP = (rtpSessionConfig.IsRtcpMultiplexed) ? remoteRtpEP : new IPEndPoint(remoteRtpEP.Address, remoteRtpEP.Port + 1);
                     }
 
-                    currentMediaStream.DestinationEndPoint = (remoteRtpEP != null && remoteRtpEP.Port != SDP.IGNORE_RTP_PORT_NUMBER) ? remoteRtpEP : currentMediaStream.DestinationEndPoint;
-                    currentMediaStream.ControlDestinationEndPoint = (remoteRtcpEP != null && remoteRtcpEP.Port != SDP.IGNORE_RTP_PORT_NUMBER) ? remoteRtcpEP : currentMediaStream.ControlDestinationEndPoint;
+                    currentMediaStream.DestinationEndPoint = (remoteRtpEP != null && remoteRtpEP.Port != SDP.IGNORE_RTP_PORT_NUMBER)
+                        ? remoteRtpEP
+                        : currentMediaStream.DestinationEndPoint;
+                    currentMediaStream.ControlDestinationEndPoint = (remoteRtcpEP != null && remoteRtcpEP.Port != SDP.IGNORE_RTP_PORT_NUMBER)
+                        ? remoteRtcpEP
+                        : currentMediaStream.ControlDestinationEndPoint;
                 }
 
                 if (currentMediaStream.MediaType == SDPMediaTypesEnum.audio)
@@ -1043,7 +1074,10 @@ public class RTPSession : IMediaSession, IDisposable
                         return SetDescriptionResultEnum.AudioIncompatible;
                     }
                 }
-                else if (capabilities?.Count == 0 || (currentMediaStream.LocalTrack == null && currentMediaStream.LocalTrack != null && currentMediaStream.LocalTrack.Capabilities?.Count == 0))
+                else if (capabilities?.Count == 0 ||
+                         (currentMediaStream.LocalTrack == null &&
+                          currentMediaStream.LocalTrack != null &&
+                          currentMediaStream.LocalTrack.Capabilities?.Count == 0))
                 {
                     return SetDescriptionResultEnum.VideoIncompatible;
 
@@ -1402,7 +1436,11 @@ public class RTPSession : IMediaSession, IDisposable
         }
     }
 
-    protected void SetGlobalSecurityContext(ProtectRtpPacket protectRtp, ProtectRtpPacket unprotectRtp, ProtectRtpPacket protectRtcp, ProtectRtpPacket unprotectRtcp)
+    protected void SetGlobalSecurityContext(
+        ProtectRtpPacket protectRtp,
+        ProtectRtpPacket unprotectRtp,
+        ProtectRtpPacket protectRtcp,
+        ProtectRtpPacket unprotectRtcp)
     {
         foreach (var audioStream in AudioStreamList)
         {
@@ -1423,7 +1461,10 @@ public class RTPSession : IMediaSession, IDisposable
             var secureContext = primaryStream.GetSecurityContext();
             if (secureContext != null)
             {
-                mediaStream.SetSecurityContext(secureContext.ProtectRtpPacket, secureContext.UnprotectRtpPacket, secureContext.ProtectRtcpPacket, secureContext.UnprotectRtcpPacket);
+                mediaStream.SetSecurityContext(secureContext.ProtectRtpPacket,
+                    secureContext.UnprotectRtpPacket,
+                    secureContext.ProtectRtcpPacket,
+                    secureContext.UnprotectRtcpPacket);
             }
             mediaStream.SetDestination(primaryStream.DestinationEndPoint, primaryStream.ControlDestinationEndPoint);
         }
@@ -1591,7 +1632,8 @@ public class RTPSession : IMediaSession, IDisposable
                 {
                     if (audioStream.DestinationEndPoint != null && audioStream.DestinationEndPoint.Address != null)
                     {
-                        if (IPAddress.Any.Equals(audioStream.DestinationEndPoint.Address) || IPAddress.IPv6Any.Equals(audioStream.DestinationEndPoint.Address))
+                        if (IPAddress.Any.Equals(audioStream.DestinationEndPoint.Address) ||
+                            IPAddress.IPv6Any.Equals(audioStream.DestinationEndPoint.Address))
                         {
                             // If the remote party has set an inactive media stream via the connection address then we do the same.
                             localAddress = audioStream.DestinationEndPoint.Address;
@@ -1609,7 +1651,8 @@ public class RTPSession : IMediaSession, IDisposable
                     {
                         if (videoStream.DestinationEndPoint != null && videoStream.DestinationEndPoint.Address != null)
                         {
-                            if (IPAddress.Any.Equals(videoStream.DestinationEndPoint.Address) || IPAddress.IPv6Any.Equals(videoStream.DestinationEndPoint.Address))
+                            if (IPAddress.Any.Equals(videoStream.DestinationEndPoint.Address) ||
+                                IPAddress.IPv6Any.Equals(videoStream.DestinationEndPoint.Address))
                             {
                                 // If the remote party has set an inactive media stream via the connection address then we do the same.
                                 localAddress = videoStream.DestinationEndPoint.Address;
@@ -1673,7 +1716,9 @@ public class RTPSession : IMediaSession, IDisposable
             mediaIndex++;
 
             int rtpPort = 0; // A port of zero means the media type is not supported.
-            if (mediaStream.LocalTrack.Capabilities != null && mediaStream.LocalTrack.Capabilities.Count() > 0 && mediaStream.LocalTrack.StreamStatus != MediaStreamStatusEnum.Inactive)
+            if (mediaStream.LocalTrack.Capabilities != null &&
+                mediaStream.LocalTrack.Capabilities.Count() > 0 &&
+                mediaStream.LocalTrack.StreamStatus != MediaStreamStatusEnum.Inactive)
             {
                 if (rtpSessionConfig.IsMediaMultiplexed)
                 {
@@ -1724,7 +1769,7 @@ public class RTPSession : IMediaSession, IDisposable
                             announcement.SecurityDescriptions.Add(SDPSecurityDescription.CreateNew(tag, cryptoSuite));
                             tag++;
                         }
-                           
+
                         srtpHandler.SetupLocal(announcement.SecurityDescriptions, sdpType);
                     }
                     else
@@ -1739,13 +1784,15 @@ public class RTPSession : IMediaSession, IDisposable
                     {
                         // try to reuse security negotiation in SDP answer
                         var sec = RemoteDescription?.Media.FirstOrDefault(a => a.MLineIndex == mindex)?.SecurityDescriptions
-                            .FirstOrDefault(s => s.Tag == srtpHandler.LocalSecurityDescription.Tag && s.CryptoSuite == srtpHandler.LocalSecurityDescription.CryptoSuite);
+                            .FirstOrDefault(s =>
+                                s.Tag == srtpHandler.LocalSecurityDescription.Tag &&
+                                s.CryptoSuite == srtpHandler.LocalSecurityDescription.CryptoSuite);
                         if (sec == null)
                         {
                             throw new ApplicationException("Error reusing crypto attribute for SDP answer. No compatible offer.");
                         }
                         else
-                        { 
+                        {
                             announcement.SecurityDescriptions.Add(srtpHandler.LocalSecurityDescription);
                         }
                     }
@@ -1768,7 +1815,10 @@ public class RTPSession : IMediaSession, IDisposable
 
                 if (srtpHandler.IsNegotiationComplete)
                 {
-                    mediaStream.SetSecurityContext(srtpHandler.ProtectRTP, srtpHandler.UnprotectRTP, srtpHandler.ProtectRTCP, srtpHandler.UnprotectRTCP);
+                    mediaStream.SetSecurityContext(srtpHandler.ProtectRTP,
+                        srtpHandler.UnprotectRTP,
+                        srtpHandler.ProtectRTCP,
+                        srtpHandler.UnprotectRTCP);
                 }
             }
 
@@ -1834,7 +1884,10 @@ public class RTPSession : IMediaSession, IDisposable
             }
             else if (audioStream.RtcpSession != null && !audioStream.RtcpSession.IsClosed && audioStream.RemoteTrack != null)
             {
-                var inactiveAudioTrack = new MediaStreamTrack(audioStream.MediaType, false, audioStream.RemoteTrack.Capabilities, MediaStreamStatusEnum.Inactive);
+                var inactiveAudioTrack = new MediaStreamTrack(audioStream.MediaType,
+                    false,
+                    audioStream.RemoteTrack.Capabilities,
+                    MediaStreamStatusEnum.Inactive);
                 audioStream.LocalTrack = inactiveAudioTrack;
                 mediaStream.Add(audioStream);
             }
@@ -1848,7 +1901,10 @@ public class RTPSession : IMediaSession, IDisposable
             }
             else if (videoStream.RtcpSession != null && !videoStream.RtcpSession.IsClosed && videoStream.RemoteTrack != null)
             {
-                var inactiveAudioTrack = new MediaStreamTrack(videoStream.MediaType, false, videoStream.RemoteTrack.Capabilities, MediaStreamStatusEnum.Inactive);
+                var inactiveAudioTrack = new MediaStreamTrack(videoStream.MediaType,
+                    false,
+                    videoStream.RemoteTrack.Capabilities,
+                    MediaStreamStatusEnum.Inactive);
                 videoStream.LocalTrack = inactiveAudioTrack;
                 mediaStream.Add(videoStream);
             }
@@ -1926,7 +1982,11 @@ public class RTPSession : IMediaSession, IDisposable
         return AudioStream?.SendDtmf(key, ct);
     }
 
-    public Task SendDtmfEvent(RTPEvent rtpEvent, CancellationToken cancellationToken, int clockRate = RTPSession.DEFAULT_AUDIO_CLOCK_RATE, int samplePeriod = RTPSession.RTP_EVENT_DEFAULT_SAMPLE_PERIOD_MS)
+    public Task SendDtmfEvent(
+        RTPEvent rtpEvent,
+        CancellationToken cancellationToken,
+        int clockRate = RTPSession.DEFAULT_AUDIO_CLOCK_RATE,
+        int samplePeriod = RTPSession.RTP_EVENT_DEFAULT_SAMPLE_PERIOD_MS)
     {
         return AudioStream?.SendDtmfEvent(rtpEvent, cancellationToken, clockRate, samplePeriod);
     }
@@ -2101,7 +2161,8 @@ public class RTPSession : IMediaSession, IDisposable
                              !mediaStream.ControlDestinationEndPoint.Address.Equals(remoteEndPoint.Address) ||
                              mediaStream.ControlDestinationEndPoint.Port != remoteEndPoint.Port))
                         {
-                            Logger.LogDebug($"{mediaStream.MediaType} control end point switched from {mediaStream.ControlDestinationEndPoint} to {remoteEndPoint}.");
+                            Logger.LogDebug(
+                                $"{mediaStream.MediaType} control end point switched from {mediaStream.ControlDestinationEndPoint} to {remoteEndPoint}.");
                             mediaStream.ControlDestinationEndPoint = remoteEndPoint;
                         }
                     }
@@ -2127,6 +2188,7 @@ public class RTPSession : IMediaSession, IDisposable
         }
 
         #endregion
+
     }
 
     private void OnReceiveRTPPacket(int localPort, IPEndPoint? remoteEndPoint, byte[] buffer)
@@ -2144,7 +2206,8 @@ public class RTPSession : IMediaSession, IDisposable
 
             if (mediaStream == null)
             {
-                Logger.LogWarning($"An RTP packet with SSRC {hdr.SyncSource} and payload ID {hdr.PayloadType} was received that could not be matched to an audio or video stream.");
+                Logger.LogWarning(
+                    $"An RTP packet with SSRC {hdr.SyncSource} and payload ID {hdr.PayloadType} was received that could not be matched to an audio or video stream.");
                 return;
             }
 
@@ -2412,6 +2475,7 @@ public class RTPSession : IMediaSession, IDisposable
                 break;
         }
     }
+
     /// <summary>
     /// Allows additional control for sending raw RTCP payloads (on the primary one).
     /// </summary>
